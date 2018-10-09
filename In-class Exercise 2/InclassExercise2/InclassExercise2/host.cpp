@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
 	clStatus = clGetPlatformIDs(num_platforms, platforms, NULL);
 	
 	//Get platform info...
-	for (int i = 0; i < num_platforms; i++) {
+	for (cl_uint i = 0; i < num_platforms; i++) {
+		std::cout << "=========================" << std::endl;
 		print_platform_info(platforms[i], CL_PLATFORM_VENDOR);
 		print_platform_info(platforms[i], CL_PLATFORM_NAME);
 		
@@ -23,7 +24,7 @@ int main(int argc, char** argv) {
 		devices = (cl_device_id *)malloc(sizeof(cl_device_id)*num_entries);
 		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, num_entries, devices, NULL);
 
-		for (int j = 0; j < num_entries; j++) {			
+		for (cl_uint j = 0; j < num_entries; j++) {
 			std::cout << "Device name: ";
 			print_device_info(devices[j], CL_DEVICE_NAME);
 			std::cout << "Device double fp config: ";
@@ -38,6 +39,7 @@ int main(int argc, char** argv) {
 			print_device_info(devices[j], CL_DEVICE_MAX_COMPUTE_UNITS);
 			std::cout << "Device max work item sizes: ";
 			print_device_info(devices[j], CL_DEVICE_MAX_WORK_ITEM_SIZES);
+			std::cout << std::endl;
 		}
 
 		std::cout << std::endl;
