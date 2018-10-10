@@ -10,9 +10,15 @@ int main(int argc, char** argv) {
 
 
 	cl_int clStatus = clGetPlatformIDs(0, NULL, &num_platforms);
-	platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*num_platforms);
+	if (clStatus == CL_SUCCESS) {
+		platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*num_platforms);
+	}
+	else { std::cout << "Problem getting platform info: " << clStatus << std::endl; }	
 	clStatus = clGetPlatformIDs(num_platforms, platforms, NULL);
-	
+	if (clStatus != CL_SUCCESS) {
+		std::cout << "Problem getting platform info: " << clStatus << std::endl;
+	}
+
 	//Get platform info...
 	for (cl_uint i = 0; i < num_platforms; i++) {
 		std::cout << "=========================" << std::endl;
@@ -20,9 +26,9 @@ int main(int argc, char** argv) {
 		print_platform_info(platforms[i], CL_PLATFORM_NAME);
 		
 
-		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, NULL, NULL, &num_entries);
+		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, NULL, NULL, &num_entries);
 		devices = (cl_device_id *)malloc(sizeof(cl_device_id)*num_entries);
-		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, num_entries, devices, NULL);
+		clStatus = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, num_entries, devices, NULL);
 
 		for (cl_uint j = 0; j < num_entries; j++) {
 			std::cout << "Device name: ";
