@@ -89,34 +89,53 @@ int main(int argc, char** argv){
 						kernel = clCreateKernel(program, "vecadd_anyD", &clStatus);
 						if (clStatus != CL_SUCCESS) { std::cout << "Error creating kernel: " << clStatus; }
 
-						float h_a[LENGTH], h_b[LENGTH], h_c[LENGTH];
+						float h_a[LENGTH], h_b[LENGTH];
 						for (i = 0; i < LENGTH; i++) {
 							h_a[i] = rand() / (float)RAND_MAX;
 							h_b[i] = rand() / (float)RAND_MAX;
 						}
 
-						cl_mem d_a = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, NULL, NULL);
-						cl_mem d_b = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, NULL, NULL);
-						cl_mem d_c = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, NULL, NULL);
+						
+						float *h_c = (float *)malloc(sizeof(float) * LENGTH);
 
-
+						cl_mem d_a = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, h_a, &clStatus);
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating buffer d_a: " << clStatus << std::endl; }
+						cl_mem d_b = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, h_b, &clStatus);
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating buffer d_b: " << clStatus << std::endl; }
+						cl_mem d_c = clCreateBuffer(context, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, sizeof(float) * LENGTH, h_c, &clStatus);
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating buffer d_c: " << clStatus << std::endl; }
+						
 						clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
 						
 						clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
 						
 						clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
 
+						cl_map_flags MapFlags(CL_MAP_READ);
+						(void *)h_c = clEnqueueMapBuffer(commands, d_c, CL_FALSE, MapFlags, 0, sizeof(float) * LENGTH, 0, NULL, NULL, &clStatus);
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating clEnqueueMapBuffer thing: " << clStatus << std::endl; }
+
+						for (int i = 0; i < LENGTH; i++) {
+							std::cout << h_c[i] << ", ";
+						}
+						std::cout << std::endl;
 						/**************************Execute Kernel*******************************************/
 						clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error creating EnqueNDRangeKernel thing: " << clStatus; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating EnqueueNDRangeKernel thing: " << clStatus << std::endl; }
 
 						clFinish(commands);
-						cl_map_flags MapFlags(CL_MAP_READ);
-						clEnqueueMapBuffer(commands, d_c, CL_FALSE, MapFlags, 0, sizeof(float) * LENGTH, 0, NULL, NULL, &clStatus);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error creating clEnqueueMapBuffer thing: " << clStatus; }
+			
+
+						clEnqueueUnmapMemObject(commands, d_c, h_c, 0, NULL, NULL);
+						for (int i = 0; i < LENGTH; i++) {
+							std::cout << d_c[i] << ", ";
+						}
+						std::cout << std::endl;
+
+
 
 					}
 
