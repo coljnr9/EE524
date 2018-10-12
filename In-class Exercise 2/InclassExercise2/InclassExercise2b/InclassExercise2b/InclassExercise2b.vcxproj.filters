@@ -15,23 +15,20 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Intel_OpenCL_Build_Rules Include="device.cl">
-      <Filter>OpenCL Files</Filter>
-    </Intel_OpenCL_Build_Rules>
-    <Intel_OpenCL_Build_Rules Include="..\InclassExercise2b\device.cl">
-      <Filter>OpenCL Files</Filter>
-    </Intel_OpenCL_Build_Rules>
-    <Intel_OpenCL_Build_Rules Include="..\InclassExercise2b\vecadd_anyD.cl">
-      <Filter>OpenCL Files</Filter>
+    <Intel_OpenCL_Build_Rules Include="..\vecadd_anyD.cl">
+      <Filter>Source Files</Filter>
     </Intel_OpenCL_Build_Rules>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="host.cpp">
+    <ClCompile Include="..\host.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="host.h">
+    <ClInclude Include="..\host.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\read_source.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

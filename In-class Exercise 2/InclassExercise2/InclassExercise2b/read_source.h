@@ -6,7 +6,8 @@
 //#include <string> 
 //#include <fstream> 
 #include <malloc.h>
-
+#include <cerrno>
+#include <iostream>
 // utility function which reads a text source-code file and returns entire file as a string.
 // note: memory is allocated by this function but must be released by caller.
 
@@ -16,6 +17,7 @@ char* read_source(/* input */ const char *file_name, /* output */ size_t* file_s
 	file = fopen(file_name, "rb");
 	if (!file) {
 		printf("Error: Failed to open file '%s'\n", file_name);
+		std::cout << "Errno: " << std::strerror(errno) << std::endl;
 		return NULL;
 	}
 

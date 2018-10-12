@@ -1,20 +1,22 @@
 #include "host.h"
-cl_int clStatus;
-cl_uint num_platforms;
 
-cl_platform_id *platforms = NULL;
-cl_platform_id intelPlatform;
-
-cl_device_id hdGraphicsDevice;
-
-cl_platform_info *platform_info = NULL;
-cl_device_info *device_info = NULL;
-
-size_t platform_info_size, device_info_size;
 
 //Get platforms
 int main(int argc, char** argv){
+	cl_int clStatus;
+	cl_uint num_platforms;
 
+	cl_platform_id *platforms = NULL;
+	cl_platform_id intelPlatform;
+
+	cl_device_id hdGraphicsDevice;
+
+	cl_platform_info *platform_info = NULL;
+	cl_device_info *device_info = NULL;
+
+	size_t platform_info_size, device_info_size;
+
+	std::cout << "Running In-class Exercise 2b" << std::endl;
 	clStatus = clGetPlatformIDs(NULL, platforms, &num_platforms);
 	if (clStatus != CL_SUCCESS) { std::cout << "Error with platform query"; }
 
@@ -52,7 +54,7 @@ int main(int argc, char** argv){
 					if (clStatus != CL_SUCCESS) { std::cout << "Error getting device name"; }
 					
 					if (strcmp((char *)device_info, "Intel(R) HD Graphics 530") == 0) {
-						//iGPU found		
+						//iGPU found
 						intelPlatform = platforms[i];
 						hdGraphicsDevice = devices[j];						
 						std::cout << "Platform: " << (char *)platform_info << ", Device: " << (char *)device_info << std::endl;
@@ -71,7 +73,7 @@ int main(int argc, char** argv){
 						const size_t global_work_dim[3] = { 12, 0, 0 };
 						const size_t local_work_dim[3] = { 12, 0, 0 };
 						
-						const char *kernel_source = read_source("vecadd_anyD.cl", &file_size);						
+						const char *kernel_source = read_source("C:\\Users\\coljnr9\\Documents\\Programming\\In-class Exercise 2\\InclassExercise2\\InclassExercise2b\\vecadd_anyD.cl", &file_size);
 
 						program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &clStatus);
 						if (clStatus != CL_SUCCESS) { std::cout << "Problem creating program from source"; }
@@ -89,14 +91,14 @@ int main(int argc, char** argv){
 						kernel = clCreateKernel(program, "vecadd_anyD", &clStatus);
 						if (clStatus != CL_SUCCESS) { std::cout << "Error creating kernel: " << clStatus; }
 
-						float h_a[LENGTH], h_b[LENGTH];
-						for (i = 0; i < LENGTH; i++) {
-							h_a[i] = rand() / (float)RAND_MAX;
-							h_b[i] = rand() / (float)RAND_MAX;
-						}
+						float *h_a = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
+						float *h_b = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
+						float *h_c = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
 
-						
-						float *h_c = (float *)malloc(sizeof(float) * LENGTH);
+						for (int j = 0; j < LENGTH; j++) {
+							h_a[j] = (float)j;
+							h_b[j] = (float)j + 1;
+						}
 
 						cl_mem d_a = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, h_a, &clStatus);
 						if (clStatus != CL_SUCCESS) { std::cout << "Error creating buffer d_a: " << clStatus << std::endl; }
@@ -106,41 +108,60 @@ int main(int argc, char** argv){
 						if (clStatus != CL_SUCCESS) { std::cout << "Error creating buffer d_c: " << clStatus << std::endl; }
 						
 						clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0:" << clStatus << std::endl; }
 						
 						clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 1:" << clStatus << std::endl; }
 						
 						clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 0 :" << clStatus << std::endl; }
-
-						cl_map_flags MapFlags(CL_MAP_READ);
-						(void *)h_c = clEnqueueMapBuffer(commands, d_c, CL_FALSE, MapFlags, 0, sizeof(float) * LENGTH, 0, NULL, NULL, &clStatus);
-						if (clStatus != CL_SUCCESS) { std::cout << "Error creating clEnqueueMapBuffer thing: " << clStatus << std::endl; }
-
-						for (int i = 0; i < LENGTH; i++) {
-							std::cout << h_c[i] << ", ";
-						}
+						if (clStatus != CL_SUCCESS) { std::cout << "Error setting arg 2:" << clStatus << std::endl; }
+												
 						std::cout << std::endl;
 						/**************************Execute Kernel*******************************************/
 						clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);
 						if (clStatus != CL_SUCCESS) { std::cout << "Error creating EnqueueNDRangeKernel thing: " << clStatus << std::endl; }
 
-						clFinish(commands);
-			
+						clFinish(commands);	
+
+						cl_map_flags MapFlags(CL_MAP_READ);
+						h_c = (float *)clEnqueueMapBuffer(commands, d_c, CL_FALSE, MapFlags, 0, sizeof(float) * LENGTH, 0, NULL, NULL, &clStatus);
+						if (clStatus != CL_SUCCESS) { std::cout << "Error creating clEnqueueMapBuffer thing: " << clStatus << std::endl; }
+						
+						std::cout << "Input buffer A:\t\t[";
+						for (int i = 0; i < LENGTH-1; i++) {
+							std::cout << h_a[i] << ", ";
+						}
+						std::cout << h_a[LENGTH - 1] << "]" << std::endl;
+
+						std::cout << "Input buffer B:\t\t[";
+						for (int i = 0; i < LENGTH - 1; i++) {
+							std::cout << h_b[i] << ", ";
+						}
+						std::cout << h_b[LENGTH - 1] << "]" << std::endl;
+
+						std::cout << "Output buffer C:\t[";
+						for (int i = 0; i < LENGTH - 1; i++) {
+							std::cout << h_c[i] << ", ";
+						}
+						std::cout << h_c[LENGTH - 1] << "]" << std::endl;					
 
 						clEnqueueUnmapMemObject(commands, d_c, h_c, 0, NULL, NULL);
-						for (int i = 0; i < LENGTH; i++) {
-							std::cout << d_c[i] << ", ";
-						}
-						std::cout << std::endl;
 
-
-
+						_aligned_free(h_a);
+						_aligned_free(h_b);
+						_aligned_free(h_c);
+						free((void *)kernel_source);
+						free(devices);
 					}
-
 				}
 			}
 		}
 	}
+	/****Release allllll dat memory***/
+	free(platforms);
+	free(platform_info);
+
+	free(device_info);
+
+
 }

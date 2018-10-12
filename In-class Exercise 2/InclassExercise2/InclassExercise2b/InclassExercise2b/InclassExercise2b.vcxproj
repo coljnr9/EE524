@@ -28,9 +28,19 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <Intel_OpenCL_Build_Rules Include="..\vecadd_anyD.cl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\host.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\host.h" />
+    <ClInclude Include="..\read_source.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{c60735d6-bce1-4ed5-84a1-e0ed2907270d}</ProjectGuid>
-    <RootNamespace>InclassExercise2</RootNamespace>
+    <ProjectGuid>{1a41d8b0-07e1-4f41-88a1-bfdda919b266}</ProjectGuid>
+    <RootNamespace>InclassExercise2b</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -124,7 +134,6 @@
       <AdditionalLibraryDirectories>$(INTELOCLSDKROOT)lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
       <Command>If exist "*.cl" copy "*.cl" "$(OutDir)\"</Command>
@@ -181,17 +190,6 @@
       <Command>If exist "*.cl" copy "*.cl" "$(OutDir)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <Intel_OpenCL_Build_Rules Include="..\InclassExercise2b\device.cl" />
-    <Intel_OpenCL_Build_Rules Include="..\InclassExercise2b\vecadd_anyD.cl" />
-    <Intel_OpenCL_Build_Rules Include="device.cl" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="host.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="host.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(INTELOCLSDKROOT)\BuildCustomizations\IntelOpenCL.targets" />
