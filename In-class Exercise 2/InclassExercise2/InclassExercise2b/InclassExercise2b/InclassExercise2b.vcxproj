@@ -32,9 +32,11 @@
     <Intel_OpenCL_Build_Rules Include="..\vecadd_anyD.cl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\CLHelpers.cpp" />
     <ClCompile Include="..\host.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CLHelpers.h" />
     <ClInclude Include="..\host.h" />
     <ClInclude Include="..\read_source.h" />
   </ItemGroup>
@@ -167,7 +169,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Intel_OpenCL_Build_Rules>
-      <Device>0</Device>
+      <Device>1</Device>
     </Intel_OpenCL_Build_Rules>
     <ClCompile>
       <AdditionalIncludeDirectories>$(INTELOCLSDKROOT)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

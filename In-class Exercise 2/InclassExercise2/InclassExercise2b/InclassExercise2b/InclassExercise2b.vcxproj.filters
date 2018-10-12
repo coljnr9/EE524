@@ -23,12 +23,18 @@
     <ClCompile Include="..\host.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\CLHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\host.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\read_source.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CLHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
