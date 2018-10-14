@@ -40,6 +40,10 @@
     <ClInclude Include="..\host.h" />
     <ClInclude Include="..\read_source.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\vecadd_anyD_input_buffer_float_16elements.csv" />
+    <None Include="..\vecadd_anyD_output_VALREF_buffer_float_16elements.csv" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1a41d8b0-07e1-4f41-88a1-bfdda919b266}</ProjectGuid>
     <RootNamespace>InclassExercise2b</RootNamespace>

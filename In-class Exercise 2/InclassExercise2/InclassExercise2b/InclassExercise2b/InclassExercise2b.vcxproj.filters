@@ -38,4 +38,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\vecadd_anyD_input_buffer_float_16elements.csv">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="..\vecadd_anyD_output_VALREF_buffer_float_16elements.csv">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>
