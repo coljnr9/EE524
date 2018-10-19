@@ -1,0 +1,42 @@
+[General]
+ActiveTab=InclassExercise4b
+
+[KBSession]
+KBTabs\2\TabFile=InclassExercise4b
+KBTabs\2\TabName=InclassExercise4b
+KBTabs\2\KBCache="&mmul$N;A;B;C$int;float*;float*;float*$__private;__global;__global;__global$NONE;NONE;NONE;NONE"
+KBTabs\2\KBVarsByKernel="mmul#N&3&512;A&0&inputBuffer;B&0&inputBuffer;C&0&outputBufer"
+KBTabs\2\KBRefsByKernel="mmul#N&;A&;B&;C&C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\bin_ref_outputBufer0.bin"
+KBTabs\2\KBGroupSizes=512#0#0#128#0#0
+KBTabs\2\KBIterations=1
+KBTabs\2\KBConfigurationNames=config_0
+KBTabs\2\KBWorkFlows=
+KBTabs\2\KBWorkFlowsSetting=
+KBTabs\2\KBExternalBinaries=
+KBTabs\2\KBSelectedKernel=mmul
+KBTabs\2\TabCode=C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\program.ir
+KBTabs\2\KBFacadeVisible=true
+KBTabs\2\IsValidation=true
+KBTabs\2\KBServerActive=true
+KBTabs\2\Artifacts="C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\program.ir;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\program_mmul.gen;"
+KBTabs\2\Reports="C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\LastRunResults/mmul.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\LastRunResults/mmul.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\LastRunResults/mmul.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\LastRunResults/mmul.cbreport"
+KBTabs\2\CLFiles=C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4b\\InclassExercise4b\\program.cl
+KBTabs\2\IsBinary=false
+KBTabs\2\TabOpt6=
+KBTabs\2\TabOpt7=2
+KBTabs\2\TabOpt10=(local) EE-365PC15
+KBTabs\2\TabOpt17=Intel(R) OpenCL
+KBTabs\2\TabOpt18=GPU: Intel(R) HD Graphics 530
+KBTabs\2\TabOpt1=true
+KBTabs\2\TabOpt3=false
+KBTabs\2\TabOpt9=Current Operating System
+KBTabs\2\TabOpt11=
+KBTabs\2\TabOpt4=false
+KBTabs\2\TabOpt13=5010
+KBTabs\2\TabOpt14=5999
+KBTabs\2\TabOpt15=true
+KBTabs\2\TabOpt16=99999
+KBTabs\2\TabOpt2=-asm$
+KBTabs\2\TabOpt19=
+KBTabs\2\TabOpt20=
+KBTabs\size=2

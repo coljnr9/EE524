@@ -1,0 +1,42 @@
+[General]
+ActiveTab=InclassExercise4
+
+[KBSession]
+KBTabs\2\TabFile=InclassExercise4
+KBTabs\2\TabName=InclassExercise4
+KBTabs\2\KBCache="&mmul_opt3$N;A;B;C$int;float*;float*;float*$__private;__global;__global;__global$NONE;NONE;NONE;NONE"
+KBTabs\2\KBVarsByKernel="mmul_opt3#N&3&512;A&0&inputBuff;B&0&inputBuff;C&0&outputBuff"
+KBTabs\2\KBRefsByKernel="mmul_opt3#N&;A&;B&;C&C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\bin_ref_outputBuff0.bin"
+KBTabs\2\KBGroupSizes=512#0#0#32#0#0
+KBTabs\2\KBIterations=1
+KBTabs\2\KBConfigurationNames=config_0
+KBTabs\2\KBWorkFlows=
+KBTabs\2\KBWorkFlowsSetting=
+KBTabs\2\KBExternalBinaries=
+KBTabs\2\KBSelectedKernel=mmul_opt3
+KBTabs\2\TabCode=C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\program.ir
+KBTabs\2\KBFacadeVisible=true
+KBTabs\2\IsValidation=true
+KBTabs\2\KBServerActive=true
+KBTabs\2\Artifacts="C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\program.ir;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\program_mmul_opt3.gen;"
+KBTabs\2\Reports="C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport;C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\LastRunResults/mmul_opt3.cbreport"
+KBTabs\2\CLFiles=C:\\Users\\coljnr9\\Documents\\EE524\\In-class Exercise 4\\InclassExercise4\\program.cl
+KBTabs\2\IsBinary=false
+KBTabs\2\TabOpt6=
+KBTabs\2\TabOpt7=2
+KBTabs\2\TabOpt10=(local) EE-365PC15
+KBTabs\2\TabOpt17=Intel(R) OpenCL
+KBTabs\2\TabOpt18=GPU: Intel(R) HD Graphics 530
+KBTabs\2\TabOpt1=true
+KBTabs\2\TabOpt3=false
+KBTabs\2\TabOpt9=Current Operating System
+KBTabs\2\TabOpt11=
+KBTabs\2\TabOpt4=false
+KBTabs\2\TabOpt13=5010
+KBTabs\2\TabOpt14=5999
+KBTabs\2\TabOpt15=true
+KBTabs\2\TabOpt16=200000
+KBTabs\2\TabOpt2=-asm$
+KBTabs\2\TabOpt19=
+KBTabs\2\TabOpt20=
+KBTabs\size=2

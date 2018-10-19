@@ -1,0 +1,1 @@
+{"workflowName": "","workflowOverallTime": "","kernelsRunData": [{"overview": {"kernelName": "mmul_opt3","confCount": 1,"iteration": 1,"bestConf": {"name": "G(512,0,0) - L(32,0,0)","median": "125.116"},"worstConf": {"name": "G(512,0,0) - L(32,0,0)","median": "125.116"}},"configurations": "mmul_opt3_1810194025_Files/data/data1.ajax"}]}

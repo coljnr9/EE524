@@ -7,7 +7,7 @@
         <MemoryFlags>CL_MEM_USE_HOST_PTR</MemoryFlags>
         <AccessQualifier>READ_ONLY</AccessQualifier>
         <I_O_Mode>0</I_O_Mode>
-        <Source>C:\Users\coljnr9\Documents\Programming\In-class Exercise 3\session_0\bin_bufferA.bin</Source>
+        <Source>C:\Users\coljnr9\Documents\EE524\In-class Exercise 3\session_0\bin_bufferA.bin</Source>
         <ReadOutput>true</ReadOutput>
         <BufferSize>262144</BufferSize>
         <InitByRandom>true</InitByRandom>
@@ -20,7 +20,7 @@
         <MemoryFlags>CL_MEM_USE_HOST_PTR</MemoryFlags>
         <AccessQualifier>READ_ONLY</AccessQualifier>
         <I_O_Mode>0</I_O_Mode>
-        <Source>C:\Users\coljnr9\Documents\Programming\In-class Exercise 3\session_0\bin_bufferB.bin</Source>
+        <Source>C:\Users\coljnr9\Documents\EE524\In-class Exercise 3\session_0\bin_bufferB.bin</Source>
         <ReadOutput>true</ReadOutput>
         <BufferSize>262144</BufferSize>
         <InitByRandom>true</InitByRandom>

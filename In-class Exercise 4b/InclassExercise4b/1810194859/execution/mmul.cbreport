@@ -1,0 +1,22 @@
+Start:Gx,Gy,Gz,Lx,Ly,Lz,Measurement,Total,Queue,Submit,Execution
+512,0,0,1,0,0,Average,363.883,87.7833,23.885,251.869
+512,0,0,1,0,0,Median,363.883,87.7833,23.885,251.869
+512,0,0,1,0,0,Standard Deviation,0,0,0,0
+512,0,0,1,0,0,Minimum,363.883,87.7833,23.885,251.869
+512,0,0,1,0,0,Maximum,363.883,87.7833,23.885,251.869
+Start:Gx,Gy,Gz,Lx,Ly,Lz,Iteration #,Total,Queue,Submit,Execution
+512,0,0,1,0,0,0,363.883,87.7833,23.885,251.869
+Start:Gx,Gy,Gz,Lx,Ly,Lz,Name,Read Time,Read Back Time,Input/Output Data
+512,0,0,1,0,0,inputBuffer,0.1169,0,C:\Users\coljnr9\Documents\EE524\In-class Exercise 4b\InclassExercise4b\input_matrix_512x512_float.bin,float*,262144,1
+512,0,0,1,0,0,inputBuffer,0,0,C:\Users\coljnr9\Documents\EE524\In-class Exercise 4b\InclassExercise4b\input_matrix_512x512_float.bin,float*,262144,1
+512,0,0,1,0,0,outputBufer,0.1002,8.4152,C:/Users/coljnr9/Documents/EE524/In-class Exercise 4b/InclassExercise4b/1810194859\execution/C_config_0_512_1.dat,float*,262144,1
+Start:Best,Median
+512,0,0,1,0,0,251.869
+Start:Worst,Median
+512,0,0,1,0,0,251.869
+Start:Analysis configuraion
+(local) EE-365PC15;Intel(R) OpenCL;GPU: Intel(R) HD Graphics 530;true;
+Start:Report summary
+512;0;0;1;0;0;1
+mmul#N&3&512;A&0&inputBuffer;B&0&inputBuffer;C&0&outputBufer
+config_0
