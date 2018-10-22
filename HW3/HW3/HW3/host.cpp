@@ -1,9 +1,9 @@
-#include "host.h"
+#include "host.hpp"
 
 bool verifyResults(float *p_mappedBufferIN, float *p_mappedBufferOut, int numValues) {
 	bool valsEqual = true;
 	for (int i = 0; i < numValues; i++) {
-		valsEqual &= (2*p_mappedBufferIN[i] == 2*p_mappedBufferOut[i]);
+		valsEqual &= (2 * p_mappedBufferIN[i] == 2 * p_mappedBufferOut[i]);
 	}
 	return valsEqual;
 }
@@ -28,14 +28,25 @@ int main(int argc, char** argv) {
 	cl_kernel kernel;
 	cl_program program;
 
+	const size_t global_work_dim[3] = { 5, 5, 0 };
+	const size_t local_work_dim[3] = { 5, 5, 0 };
 
-	const size_t global_work_dim[3] = { LENGTH, 0, 0 };
-	const size_t local_work_dim[3] = { LENGTH, 0, 0 };
-	float *h_a = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
-	float *h_b = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
-	float *h_c = (float *)_aligned_malloc(sizeof(float) * LENGTH, 4096);
-	const float inputBuff[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-	const float outputBuff[] = { 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32 };
+	union openCLTestUnion
+	{
+		cl_float f;
+		cl_short s;
+		cl_char c;
+	};
+
+	struct openCLTestStruct
+	{
+		cl_char c;
+		cl_char4 c4;
+		union openCLTestUnion uni;
+		cl_uint2 u2[4];
+	};
+
+
 
 
 	std::cout << "Running In-class Exercise 2b" << std::endl;
@@ -90,8 +101,7 @@ int main(int argc, char** argv) {
 
 							/*********************************Starting the kernal building process*******************/
 							std::cout << std::endl << "*********************************Starting the kernal building process*******************" << std::endl;
-						
-							std::string kernel_source_path = R"(..\vecadd_anyD.cl)";
+							std::string kernel_source_path = R"(D:\School\EE524\HW3\HW3\HW3\device.cl)";
 							const char *kernel_source = read_source(kernel_source_path.c_str(), &file_size);
 							if (!kernel_source) {
 								std::cout << "Some error occurred reading the source file... " << strerror(errno) << std::endl;
@@ -114,82 +124,69 @@ int main(int argc, char** argv) {
 								std::cout << buffer << std::endl;
 							}
 
-							kernel = clCreateKernel(program, "vecadd_anyD", &clStatus);
+							kernel = clCreateKernel(program, "helloParallelWorld", &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating kernel", "Kernel created successfully");
 
-							//Popuplate input buffers...
-							for (int i = 0; i < LENGTH; i++) {
-								h_a[i] = inputBuff[i];
-								h_b[i] = inputBuff[i];
+							/**************************Popuplate Kernel Arguements*******************************************/
+							//Data
+							openCLTestUnion test_union = { 0x43d20000 };
+							openCLTestStruct test_struct;
+							test_struct.c = 'M';							
+							test_struct.c4 = { '1', '2', '3', '4' };
+							test_struct.uni = test_union;
+							for (int m = 0; m < 4; m++) {
+								cl_uint cm = (cl_uint)m;
+								test_struct.u2[m] = { 0+cm, 1+ cm };
 							}
+							cl_float3 f3 = { 0.0, 1.1, 2.2 };
+							cl_float4 f4 = { 3.3, 4.4, 5.5, 6.6 };
+							cl_float8 f8 = { 0.1, 1.2, 2.3, 3.4, 4.5, 5.6, 6.7, 7.8 };
+							cl_float16 f16 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+							
+
+							cl_mem d_f3 = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float3), &f3, &clStatus);
+							CL_CHK_ERR(clStatus, "Error creating f3 buffer", "f3 buffer created successfully");
+
+							cl_mem d_f4 = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float4), &f4, &clStatus);
+							CL_CHK_ERR(clStatus, "Error creating f4 buffer", "f4 buffer created successfully");
+
+							cl_mem d_f8 = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float8), &f8, &clStatus);
+							CL_CHK_ERR(clStatus, "Error creating f8 buffer", "f8 buffer created successfully");
+
+							cl_mem d_ptr_struct = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(&test_struct), &test_struct, &clStatus);
+							CL_CHK_ERR(clStatus, "Error creating struct buffer", "Struct buffer created successfully");
+
+							clStatus = clSetKernelArg(kernel, 0, sizeof(cl_float3), &f3);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully");
 
 
-							cl_mem d_a = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, h_a, &clStatus);
-							CL_CHK_ERR(clStatus, "Error creating buffer d_a", "Buffer d_a created successfully");
+							clStatus = clSetKernelArg(kernel, 1, sizeof(cl_float4), &f4);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully");
 
-							cl_mem d_b = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(float) * LENGTH, h_b, &clStatus);
-							CL_CHK_ERR(clStatus, "Error creating buffer d_b", "Buffer d_b created successfully");
-							cl_mem d_c = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(float) * LENGTH, h_c, &clStatus);
-							CL_CHK_ERR(clStatus, "Error creating buffer d_c", "Buffer d_c created successfully");
+							clStatus = clSetKernelArg(kernel, 2, sizeof(cl_float8), &f8);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully");
+							
+							clStatus = clSetKernelArg(kernel, 3, sizeof(cl_float16), &f16);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 2 set successfully");
 
-							clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_a);
-							CL_CHK_ERR(clStatus, "Error setting arg 0", "Arg 0 set successfully");
-							clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &d_b);
-							CL_CHK_ERR(clStatus, "Error setting arg 1", "Arg 1 set successfully");
-							clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &d_c);
-							CL_CHK_ERR(clStatus, "Error setting arg 2", "Arg 2 set successfully");
+							clStatus = clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_ptr_struct);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 4", "Kernel arg 3 set successfully");
+							
 
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
 							/**************************Execute Kernel*******************************************/
-							clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);
+							clStatus = clEnqueueNDRangeKernel(commands, kernel, 2, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);
 							CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
 							clFinish(commands);
-
-							cl_map_flags MapFlags(CL_MAP_READ);
-							h_c = (float *)clEnqueueMapBuffer(commands, d_c, CL_FALSE, MapFlags, 0, sizeof(float) * LENGTH, 0, NULL, NULL, &clStatus);
-							CL_CHK_ERR(clStatus, "Shared memory mapping failed", "Shared memory mapped successfully");
-
-							std::cout << std::endl << "**************************Begin Results*******************************************" << std::endl;
-							std::cout << "Input buffer A:\t\t[";
-							for (int i = 0; i < LENGTH - 1; i++) {
-								std::cout << h_a[i] << ", ";
-							}
-							std::cout << h_a[LENGTH - 1] << "]" << std::endl;
-
-							std::cout << "Input buffer B:\t\t[";
-							for (int i = 0; i < LENGTH - 1; i++) {
-								std::cout << h_b[i] << ", ";
-							}
-							std::cout << h_b[LENGTH - 1] << "]" << std::endl;
-
-							std::cout << "Output buffer C:\t[";
-							for (int i = 0; i < LENGTH - 1; i++) {
-								std::cout << h_c[i] << ", ";
-							}
-							std::cout << h_c[LENGTH - 1] << "]" << std::endl;
-							std::cout << "**************************End Results*******************************************" << std::endl << std::endl;
-
-							std::cout << "**************************Results Verification***********************************" << std::endl << std::endl;
-
-							if (verifyResults(h_c, (float *)outputBuff, LENGTH)) {
-								std::cout << "Input and output buffers verify as expected" << std::endl;
-							} else {
-								std::cout << "Vector addition did not successfully verify" << std::endl;
-							}
-
-							clEnqueueUnmapMemObject(commands, d_c, h_c, 0, NULL, NULL);
-							free((void *)kernel_source);
-
 						}
 					}
 				}
 			}
 		}
+
 	/****Release allllll dat memory***/
-	_aligned_free(h_a);
-	_aligned_free(h_b);
-	_aligned_free(h_c);
+
 	free(platforms);
 	free(platform_info);
 	free(devices);

@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 
 							/*********************************Starting the kernal building process*******************/
 							std::cout << std::endl << "*********************************Starting the kernal building process*******************" << std::endl;
-						
+							std::cout << std::endl << "*********************************Starting the kernal building process*******************" << std::endl;
 							std::string kernel_source_path = R"(..\vecadd_anyD.cl)";
 							const char *kernel_source = read_source(kernel_source_path.c_str(), &file_size);
 							if (!kernel_source) {
