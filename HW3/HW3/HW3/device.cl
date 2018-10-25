@@ -9,11 +9,10 @@ union openCLTestUnion
 
 typedef struct openCLTestStruct
 {
-	char c __attribute__((packed));
-	char4 c4 __attribute__((packed));	
+	uint2 u2[4];
+	char4 c4 ;	
 	union { float f; short s; char c; } uni;
-	uint2 u2[4] __attribute__((packed));
-	
+	char c;
 };
 
 __kernel void helloParallelWorld(float3 vec3, float4 vec4, float8 vec8, float16 vec16, __global struct openCLTestStruct* ptr_struct) {

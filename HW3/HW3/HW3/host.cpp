@@ -39,11 +39,11 @@ int main(int argc, char** argv) {
 
 	struct openCLTestStruct
 	{
-		cl_char c;
-		cl_char4 c4;					   
-		union {	cl_float f; cl_short s; cl_char c; } uni;	
-		cl_uint2 u2[4];
-											
+		cl_uint2 u2[4];										/*8 bytes*/		
+		cl_char4 c4;									    /*4 bytes*/
+		union {	cl_float f; cl_short s; cl_char c; } uni;	/*4 bytes max*/
+		cl_char c;											/*1 byte*/
+	
 	};
 
 
