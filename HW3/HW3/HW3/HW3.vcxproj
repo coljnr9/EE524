@@ -188,8 +188,10 @@
   <ItemGroup>
     <ClCompile Include="CLHelpers.cpp" />
     <ClCompile Include="host.cpp" />
+    <ClCompile Include="MatMul_host.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Intel_OpenCL_Build_Rules Include="..\..\MatMul_opt1.cl" />
     <Intel_OpenCL_Build_Rules Include="device.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
