@@ -180,6 +180,10 @@ int main(int argc, char** argv) {
 							CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
 							clFinish(commands);
+
+							/**************************Build MatMul Kernel*******************************************/
+							std::cout << std::endl << "*********************************Starting the MatMul kernel building process*******************" << std::endl;
+
 						}
 					}
 				}

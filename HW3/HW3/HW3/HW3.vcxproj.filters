@@ -29,9 +29,6 @@
     <ClCompile Include="CLHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MatMul_host.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="host.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
