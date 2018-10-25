@@ -15,11 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Intel_OpenCL_Build_Rules Include="device.cl">
-      <Filter>OpenCL Files</Filter>
-    </Intel_OpenCL_Build_Rules>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="host.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -37,5 +32,10 @@
     <ClCompile Include="CLHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Intel_OpenCL_Build_Rules Include="device.cl">
+      <Filter>OpenCL Files</Filter>
+    </Intel_OpenCL_Build_Rules>
   </ItemGroup>
 </Project>

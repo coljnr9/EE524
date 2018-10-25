@@ -7,7 +7,6 @@ bool verifyResults(float *p_mappedBufferIN, float *p_mappedBufferOut, int numVal
 	}
 	return valsEqual;
 }
-
 int main(int argc, char** argv) {
 	cl_int clStatus;
 	cl_uint num_platforms;
@@ -40,10 +39,11 @@ int main(int argc, char** argv) {
 
 	struct openCLTestStruct
 	{
-		cl_char c;
-		cl_char4 c4;
-		union openCLTestUnion uni;
-		cl_uint2 u2[4];
+		cl_uint2 u2[4];										/*8 bytes*/		
+		cl_char4 c4;									    /*4 bytes*/
+		union {	cl_float f; cl_short s; cl_char c; } uni;	/*4 bytes max*/
+		cl_char c;											/*1 byte*/
+	
 	};
 
 
@@ -129,20 +129,22 @@ int main(int argc, char** argv) {
 
 							/**************************Popuplate Kernel Arguements*******************************************/
 							//Data
-							openCLTestUnion test_union = { 0x43d20000 };
 							openCLTestStruct test_struct;
+							cl_char4 char_vec = { 'A', 'B', 'C','D' };
 							test_struct.c = 'M';							
-							test_struct.c4 = { '1', '2', '3', '4' };
-							test_struct.uni = test_union;
+							test_struct.c4 = char_vec;
+							test_struct.uni.f = 420.0f;
+							cl_uint2 u2[4] = { {1, 2}, {2,3}, {3,4}, {4,5} };
 							for (int m = 0; m < 4; m++) {
-								cl_uint cm = (cl_uint)m;
-								test_struct.u2[m] = { 0+cm, 1+ cm };
+								test_struct.u2[m] = u2[m];
 							}
-							cl_float3 f3 = { 0.0, 1.1, 2.2 };
-							cl_float4 f4 = { 3.3, 4.4, 5.5, 6.6 };
-							cl_float8 f8 = { 0.1, 1.2, 2.3, 3.4, 4.5, 5.6, 6.7, 7.8 };
-							cl_float16 f16 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 							
+							const openCLTestStruct* struct_ptr = &test_struct;
+							cl_float3 f3 = { 0.0f, 1.1f, 2.2f };
+							cl_float4 f4 = { 3.3f, 4.4f, 5.5f, 6.6f };
+							cl_float8 f8 = { 0.1f, 1.2f, 2.3f, 3.4f, 4.5f, 5.6f, 6.7f, 7.8f };
+							cl_float16 f16 = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f };
+
 
 							cl_mem d_f3 = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float3), &f3, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating f3 buffer", "f3 buffer created successfully");
@@ -153,7 +155,7 @@ int main(int argc, char** argv) {
 							cl_mem d_f8 = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float8), &f8, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating f8 buffer", "f8 buffer created successfully");
 
-							cl_mem d_ptr_struct = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(&test_struct), &test_struct, &clStatus);
+							cl_mem d_ptr_struct = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(openCLTestStruct), &test_struct, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating struct buffer", "Struct buffer created successfully");
 
 							clStatus = clSetKernelArg(kernel, 0, sizeof(cl_float3), &f3);
@@ -167,12 +169,11 @@ int main(int argc, char** argv) {
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully");
 							
 							clStatus = clSetKernelArg(kernel, 3, sizeof(cl_float16), &f16);
-							CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 2 set successfully");
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully");
 
 							clStatus = clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_ptr_struct);
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 4", "Kernel arg 3 set successfully");
-							
-
+					
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
 							/**************************Execute Kernel*******************************************/
 							clStatus = clEnqueueNDRangeKernel(commands, kernel, 2, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);

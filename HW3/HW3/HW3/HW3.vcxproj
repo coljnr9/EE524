@@ -181,9 +181,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Intel_OpenCL_Build_Rules Include="device.cl" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="CLHelpers.h" />
     <ClInclude Include="host.hpp" />
     <ClInclude Include="read_source.h" />
@@ -191,6 +188,9 @@
   <ItemGroup>
     <ClCompile Include="CLHelpers.cpp" />
     <ClCompile Include="host.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Intel_OpenCL_Build_Rules Include="device.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
