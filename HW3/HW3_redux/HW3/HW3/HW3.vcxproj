@@ -28,8 +28,21 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CLHelpers.h" />
+    <ClInclude Include="..\host.hpp" />
+    <ClInclude Include="..\read_source.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\CLHelpers.cpp" />
+    <ClCompile Include="..\host.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Intel_OpenCL_Build_Rules Include="..\device.cl" />
+    <Intel_OpenCL_Build_Rules Include="..\MatMul_opt1.cl" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{a9a551ae-9864-4246-9664-a96517d68986}</ProjectGuid>
+    <ProjectGuid>{8c1615ab-440e-497b-a2c1-7a0f71f16ae1}</ProjectGuid>
     <RootNamespace>HW3</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -157,7 +170,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Intel_OpenCL_Build_Rules>
-      <Device>1</Device>
+      <Device>0</Device>
     </Intel_OpenCL_Build_Rules>
     <ClCompile>
       <AdditionalIncludeDirectories>$(INTELOCLSDKROOT)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -180,19 +193,6 @@
       <Command>If exist "*.cl" copy "*.cl" "$(OutDir)\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="CLHelpers.h" />
-    <ClInclude Include="host.hpp" />
-    <ClInclude Include="read_source.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="CLHelpers.cpp" />
-    <ClCompile Include="host.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Intel_OpenCL_Build_Rules Include="..\..\MatMul_opt1.cl" />
-    <Intel_OpenCL_Build_Rules Include="device.cl" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(INTELOCLSDKROOT)\BuildCustomizations\IntelOpenCL.targets" />
