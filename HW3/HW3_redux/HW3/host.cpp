@@ -220,13 +220,10 @@ int main(int argc, char** argv) {
 							CL_CHK_ERR(clStatus, "Error creating kernel", "Kernel created successfully");
 
 							/**************************Populate MatMul Kernel Arguments*******************************************/
-							std::cout << std::endl << "*********************************Populate MatMul Kernel Arguments*******************" << std::endl;
-							
-
-							
+							std::cout << std::endl << "*********************************Populate MatMul Kernel Arguments*******************" << std::endl;		
 							for (int m = 0; m < N*N; m++) {
-								h_A[m] = (cl_float)1;
-								h_B[m] = (cl_float)1;
+								h_A[m] = (cl_float)(1+m);
+								h_B[m] = (cl_float)(1+m);
 							}						
 
 							cl_mem d_A = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float) * N * N, h_A, &clStatus);
@@ -251,17 +248,20 @@ int main(int argc, char** argv) {
 							
 							/**************************Execute Kernel*******************************************/
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
-							clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
-							CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+							for (int i = 0; i < 500; i++){
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
+								CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
-							clFinish(commands);
-							cl_map_flags MapFlags(CL_MAP_READ);
-							h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
-							CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
-
-							for (int i = 0; i < 10; i++) {
-								printf("%f\n", h_C[i]);
+								clFinish(commands);
+								cl_map_flags MapFlags(CL_MAP_READ);
+								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
+								CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+								for (int i = 0; i < 10; i++) {
+									printf("%f\n", h_C[i]);
+								}
+								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
 							}
+						
 							std::cout << std::endl << "*********************************Done with work for Intel platform*******************" << std::endl;
 						}
 					}
