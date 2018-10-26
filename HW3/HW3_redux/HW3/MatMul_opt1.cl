@@ -8,5 +8,5 @@ __kernel void MatMul_opt1(const int N, __global float *A, __global float *B, __g
 	for (k = 0; k < N; k++){ 
 		tmp += A[i*N + k] * B[k*N + j];
 	}
-	C[i*N + j] += tmp;
+	C[i*N + j] = tmp;
 }

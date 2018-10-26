@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 
 	cl_float *h_A = (cl_float*)_aligned_malloc(N*N * sizeof(cl_float), 4096);
 	cl_float *h_B = (cl_float*)_aligned_malloc(N*N * sizeof(cl_float), 4096);
-	cl_float *h_C = (cl_float*)_aligned_malloc(N*N * sizeof(cl_float), 4096);
+	float *h_C = (float*)_aligned_malloc(N*N * sizeof(float), 4096);
 
 	union openCLTestUnion
 	{
@@ -224,36 +224,44 @@ int main(int argc, char** argv) {
 							
 
 							
-							for (cl_int m = 0; m < N*N; m++) {
+							for (int m = 0; m < N*N; m++) {
 								h_A[m] = (cl_float)1;
 								h_B[m] = (cl_float)1;
 							}						
 
-							cl_mem d_A = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(h_A), &h_A, &clStatus);
+							cl_mem d_A = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float) * N * N, h_A, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating d_A buffer", "d_A buffer created successfully");
-							cl_mem d_B = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(h_B), &h_B, &clStatus);
+							cl_mem d_B = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float) * N * N, h_B, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating d_B buffer", "d_B buffer created successfully");
-							cl_mem d_C = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(h_C), &h_C, &clStatus);
+							cl_mem d_C = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(cl_float) * N * N, h_C, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating d_C buffer", "d_C buffer created successfully");
 							
 							cl_uint matMul_N = N;
 							clStatus = clSetKernelArg(matmul_kernel, 0, sizeof(cl_uint), &matMul_N);
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully");
-							clStatus = clSetKernelArg(matmul_kernel, 1, sizeof(d_A), &d_A);
+							clStatus = clSetKernelArg(matmul_kernel, 1, sizeof(cl_mem), &d_A);
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully");
-							clStatus = clSetKernelArg(matmul_kernel, 2, sizeof(d_B), &d_B);
+							clStatus = clSetKernelArg(matmul_kernel, 2, sizeof(cl_mem), &d_B);
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully");
-							clStatus = clSetKernelArg(matmul_kernel, 3, sizeof(d_C), &d_C);
+							clStatus = clSetKernelArg(matmul_kernel, 3, sizeof(cl_mem), &d_C);
 							CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully");
 
+							size_t matmul_global_work_dim[3] = { N, N, 0 };
+							size_t matmul_local_work_dim[3] = { 16, 16, 0 };
 							
 							/**************************Execute Kernel*******************************************/
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
-							clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, global_work_dim, local_work_dim, 0, NULL, NULL);
+							clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
 							CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
 							clFinish(commands);
-							cl
+							cl_map_flags MapFlags(CL_MAP_READ);
+							h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
+							CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+
+							for (int i = 0; i < 10; i++) {
+								printf("%f\n", h_C[i]);
+							}
 							std::cout << std::endl << "*********************************Done with work for Intel platform*******************" << std::endl;
 						}
 					}

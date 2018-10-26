@@ -1,0 +1,24 @@
+-r
+C:\Users\coljnr9\Documents\EE524\In-class Exercise 5a\VTune\EE524_L5\ee524_MMUL_Analysis_L5\r000gh
+--itt-config=frame
+--stack-stitching
+--etw-config=dma,frames
+--data-limit-mb=500
+--disk-space-limit=0
+--type=opencl_ex
+--type=opencl,mediasdk
+--itt-config=task
+--gpu-config=preset7:timer=100us
+--mrte-type=java,dotnet
+--event-config=CPU_CLK_UNHALTED.THREAD:sa=2500000,CPU_CLK_UNHALTED.REF_TSC:sa=2500000,INST_RETIRED.ANY:sa=2500000,CPU_CLK_UNHALTED.REF_XCLK:sa=100003,CPU_CLK_UNHALTED.ONE_THREAD_ACTIVE:sa=100003
+--platform-type=103
+--uncore-sampling-interval=10
+--mrte-mode=auto
+--etw-config=clr,js
+--
+C:\Users\coljnr9\Documents\EE524\In-class Exercise 5a\VTune\EE524_L5\ee524_L5_vtune_mmul_test.exe
+4
+5
+512
+2
+32
