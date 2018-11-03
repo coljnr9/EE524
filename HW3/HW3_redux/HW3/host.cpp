@@ -1,5 +1,5 @@
 #include "host.hpp"
-#define N 512
+#define N 1024
 
 bool verifyResults(float *p_mappedBufferIN, float *p_mappedBufferOut, int numValues) {
 	bool valsEqual = true;
@@ -9,8 +9,14 @@ bool verifyResults(float *p_mappedBufferIN, float *p_mappedBufferOut, int numVal
 	return valsEqual;
 }
 int main(int argc, char** argv) {
+	LARGE_INTEGER perfFreq;
+	LARGE_INTEGER perfCountNDRangeStart;
+	LARGE_INTEGER perfCountNDRangeStop;
+	float cumRuntime = 0.0f;
+	float cumSeqRuntime = 0.0f;
 
-	
+	cl_event prof_event;
+
 	cl_int clStatus;
 	cl_uint num_platforms;
 
@@ -103,7 +109,7 @@ int main(int argc, char** argv) {
 							cl_context context = clCreateContext(properties, 1, &hdGraphicsDevice, NULL, NULL, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating context", "Context created successfully");
 
-							cl_command_queue commands = clCreateCommandQueue(context, hdGraphicsDevice, 0, &clStatus);
+							cl_command_queue commands = clCreateCommandQueue(context, hdGraphicsDevice, CL_QUEUE_PROFILING_ENABLE, &clStatus);
 							CL_CHK_ERR(clStatus, "Error creating commands queue", "Commands queue created successfully");
 
 							/*********************************Starting the kernal building process*******************/
@@ -222,8 +228,8 @@ int main(int argc, char** argv) {
 							/**************************Populate MatMul Kernel Arguments*******************************************/
 							std::cout << std::endl << "*********************************Populate MatMul Kernel Arguments*******************" << std::endl;		
 							for (int m = 0; m < N*N; m++) {
-								h_A[m] = (cl_float)(1+m);
-								h_B[m] = (cl_float)(1+m);
+								h_A[m] = (cl_float)(1);
+								h_B[m] = (cl_float)(1);
 							}						
 
 							cl_mem d_A = clCreateBuffer(context, CL_MEM_USE_HOST_PTR, sizeof(cl_float) * N * N, h_A, &clStatus);
@@ -246,22 +252,124 @@ int main(int argc, char** argv) {
 							size_t matmul_global_work_dim[3] = { N, N, 0 };
 							size_t matmul_local_work_dim[3] = { 16, 16, 0 };
 							
-							/**************************Execute Kernel*******************************************/
+							/**************************Execute Kernel (WPC Profiling)*******************************************/
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
 							for (int i = 0; i < 500; i++){
+								QueryPerformanceCounter(&perfCountNDRangeStart);
 								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
-								CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+								QueryPerformanceCounter(&perfCountNDRangeStop);
+								QueryPerformanceFrequency(&perfFreq);
+								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
 								clFinish(commands);
+								
+								float exectime = 1000.0f * (float)(perfCountNDRangeStop.QuadPart - perfCountNDRangeStart.QuadPart) / (float)perfFreq.QuadPart;
+								//std::cout << "This runtime: " << exectime << std::endl;
+								cumRuntime += exectime;
 								cl_map_flags MapFlags(CL_MAP_READ);
 								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
-								CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
-								for (int i = 0; i < 10; i++) {
-									printf("%f\n", h_C[i]);
-								}
+								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+
 								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
 							}
+							std::cout << "Average runtime for clEnqueueNDRangeKernel (over 500 iters): " << cumRuntime / 500.0f << " ms (WPC)" << std::endl;
+							cumRuntime = 0.0f;
+
+							for (int i = 0; i < 500; i++) {
+								QueryPerformanceCounter(&perfCountNDRangeStart);
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
+								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+
+								clFinish(commands);
+								QueryPerformanceCounter(&perfCountNDRangeStop);
+								QueryPerformanceFrequency(&perfFreq);
+								float exectime = 1000.0f * (float)(perfCountNDRangeStop.QuadPart - perfCountNDRangeStart.QuadPart) / (float)perfFreq.QuadPart;
+								//std::cout << "This runtime: " << exectime << std::endl;
+								cumRuntime += exectime;
+								cl_map_flags MapFlags(CL_MAP_READ);
+								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
+								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+
+								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
+							}
+							std::cout << "Average runtime total (over 500 iters): " << cumRuntime / 500.0f << " ms (WPC)" << std::endl;
+							
 						
+
+							/**************************Execute Kernel (OpenCL Profiling)*******************************************/
+							double run_time = 0.0f;
+							cl_ulong start_time, end_time;
+							size_t return_bytes;
+							for (int i = 0; i < 500; i++) {								
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, &prof_event);
+								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+								
+								clStatus = clWaitForEvents(1, &prof_event);
+								//CL_CHK_ERR(clStatus, "Error waiting for events", "Waited for events successfully");
+
+
+								clStatus = clGetEventProfilingInfo(
+									prof_event,
+									CL_PROFILING_COMMAND_QUEUED,
+									sizeof(cl_ulong),
+									&start_time,
+									&return_bytes);
+								//CL_CHK_ERR(clStatus, "Error getting profiling events", "Profiling events captured successfully");
+
+								clStatus = clGetEventProfilingInfo(
+									prof_event,
+									CL_PROFILING_COMMAND_END,
+									sizeof(cl_ulong),
+									&end_time,
+									&return_bytes);
+								//CL_CHK_ERR(clStatus, "Error getting profiling events 2", "Profiling events 2 captured successfully");
+								run_time += (double)(end_time - start_time) * 1.0e-9f; // Open CL uses nano-seconds. This converts to seconds.
+								
+								clFinish(commands);
+
+								//std::cout << "This runtime: " << exectime << std::endl;
+			
+								cl_map_flags MapFlags(CL_MAP_READ);
+								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
+								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+
+								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
+							}
+							std::cout << "Average runtime for clEnqueueNDRange (over 500 iters): " << 1000.0f * run_time / 500.0f << " ms (OpenCL)" << std::endl;
+							run_time = 0.0;
+
+							for (int i = 0; i < 500; i++) {								
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, &prof_event);
+								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+
+								clFinish(commands);							
+								clStatus = clWaitForEvents(1, &prof_event);
+								//CL_CHK_ERR(clStatus, "Error waiting for events", "Waited for events successfully");
+
+								size_t return_bytes;
+								clStatus = clGetEventProfilingInfo(
+									prof_event,
+									CL_PROFILING_COMMAND_QUEUED,
+									sizeof(cl_ulong),
+									&start_time,
+									&return_bytes);
+								//CL_CHK_ERR(clStatus, "Error getting profiling events", "Profiling events captured successfully");
+
+								clStatus = clGetEventProfilingInfo(
+									prof_event,
+									CL_PROFILING_COMMAND_END,
+									sizeof(cl_ulong),
+									&end_time,
+									&return_bytes);
+								run_time += (double)(end_time - start_time) * 1.0e-9f; // Open CL uses nano-seconds. This converts to seconds.
+
+								cl_map_flags MapFlags(CL_MAP_READ);
+								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
+								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+
+								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
+							}
+							std::cout << "Average runtime total (over 500 iters): " << 1000.0f * run_time / 500.0f << " ms (OpenCL)" << std::endl;
 							std::cout << std::endl << "*********************************Done with work for Intel platform*******************" << std::endl;
 						}
 					}
