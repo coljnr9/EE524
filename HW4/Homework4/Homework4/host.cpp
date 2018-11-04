@@ -110,7 +110,62 @@ int main(int argc, char** argv) {
 							- Enqueue kernel
 							- retrieve results
 							*/
-						
+							// Load image
+							int img_width, img_height, img_channels;
+							cl_image_format img_format;
+							cl_image_desc img_description;
+							size_t global_work_size[3] = { 850, 850, 0 };
+							size_t local_work_size[3] = { 5, 5, 0 };
+							cl_float theta = 30;
+
+							
+							const unsigned char *boat_image = stbi_load("Big_Gray-Lena_8bit.png", &img_width, &img_height, &img_channels, STBI_grey);
+							unsigned char *rotated_image[sizeof(boat_image)];
+							img_format.image_channel_data_type = CL_UNSIGNED_INT8;
+							img_format.image_channel_order = CL_RGBA;
+							img_description.image_type = CL_MEM_OBJECT_IMAGE2D;
+							img_description.image_width = img_width;
+							img_description.image_height = img_height;
+							img_description.image_depth = 0;
+							img_description.image_row_pitch = 0;
+							img_description.image_slice_pitch = 0;
+							//create buffers??W
+							cl_mem input_mem_image = clCreateImage2D(context, 
+								CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY,
+								&img_format, 
+								img_description.image_width,
+								img_description.image_height, 
+								0, 
+								(void *)boat_image, 
+								&clStatus);
+							CL_CHK_ERR(clStatus, "Error creatimg image", "Image created successfully");
+
+							cl_mem output_mem_image = clCreateImage2D(context,
+								CL_MEM_ALLOC_HOST_PTR |  CL_MEM_WRITE_ONLY,
+								&img_format,
+								img_description.image_width,
+								img_description.image_height,
+								0,
+								(void *)rotated_image,
+								&clStatus);
+
+							clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &input_mem_image);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully");
+							clStatus = clSetKernelArg(kernel, 1, sizeof(cl_mem), &output_mem_image);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully");
+							clStatus = clSetKernelArg(kernel, 2, sizeof(img_description.image_width), &img_description.image_width);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully");
+							clStatus = clSetKernelArg(kernel, 3, sizeof(img_description.image_height), &img_description.image_height);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully");
+							clStatus = clSetKernelArg(kernel, 4, sizeof(cl_float), &theta);
+							CL_CHK_ERR(clStatus, "Error setting kernel arg 4", "Kernel arg 4 set successfully");
+
+							clStatus = clEnqueueNDRangeKernel(commands, kernel, 2, 0, global_work_size, local_work_size, NULL, NULL, NULL);
+							CL_CHK_ERR(clStatus, "NDRangeKernel failed", "NDRangeKernel queued successfully");
+
+							 // Map memory buffer to host address space?
+							
+							stbi_write_png("output.png", img_width, img_height, 4, rotated_image, 4 * img_width);
 							std::cout << std::endl << "*********************************Done with work for Intel platform*******************" << std::endl;
 						}
 					}
