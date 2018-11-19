@@ -19,13 +19,35 @@ cl_platform_id get_intel_platform(const string platformName);
 
 // print the build log in case of failure 
 void build_fail_log(cl_program, cl_device_id);
-const int kernel_width = 5;
-const float gaussBlurFilter_5x5[kernel_width * kernel_width] = {
+int kernel_width = 5;
+const float gaussBlurFilter_5x5[5*5] = {
 1.0f / 273.0f, 4.0f / 273.0f, 7.0f / 273.0f, 4.0f / 273.0f, 1.0f / 273.0f,
 4.0f / 273.0f, 16.0f / 273.0f, 26.0f / 273.0f, 16.0f / 273.0f, 4.0f / 273.0f,
 7.0f / 273.0f, 26.0f / 273.0f, 41.0f / 273.0f, 26.0f / 273.0f, 7.0f / 273.0f,
 4.0f / 273.0f, 16.0f / 273.0f, 26.0f / 273.0f, 16.0f / 273.0f, 4.0f / 273.0f,
 1.0f / 273.0f, 4.0f / 273.0f, 7.0f / 273.0f, 4.0f / 273.0f, 1.0f / 273.0f
+};
+const float gaussBlurFilter_7x7[7 * 7] = {
+	0.0091,0.0132,0.0165,0.0178,0.0165,0.0132,0.0091,
+	0.0132,0.0192,0.0239,0.0258,0.0239,0.0192,0.0132,
+	0.0165,0.0239,0.0299,0.0322,0.0299,0.0239,0.0165,
+	0.0178,0.0258,0.0322,0.0347,0.0322,0.0258,0.0178,
+	0.0165,0.0239,0.0299,0.0322,0.0299,0.0239,0.0165,
+	0.0132,0.0192,0.0239,0.0258,0.0239,0.0192,0.0132,
+	0.0091,0.0132,0.0165,0.0178,0.0165,0.0132,0.0091
+
+};
+const float gaussBlurFilter_9x9[9*9] = {
+0.0074,0.0089,0.0101,0.0110,0.0113,0.0110,0.0101,0.0089,0.0074,
+0.0089,0.0107,0.0122,0.0132,0.0135,0.0132,0.0122,0.0107,0.0089,
+0.0101,0.0122,0.0139,0.0150,0.0154,0.0150,0.0139,0.0122,0.0101,
+0.0110,0.0132,0.0150,0.0162,0.0166,0.0162,0.0150,0.0132,0.0110,
+0.0113,0.0135,0.0154,0.0166,0.0171,0.0166,0.0154,0.0135,0.0113,
+0.0110,0.0132,0.0150,0.0162,0.0166,0.0162,0.0150,0.0132,0.0110,
+0.0101,0.0122,0.0139,0.0150,0.0154,0.0150,0.0139,0.0122,0.0101,
+0.0089,0.0107,0.0122,0.0132,0.0135,0.0132,0.0122,0.0107,0.0089,
+0.0074,0.0089,0.0101,0.0110,0.0113,0.0110,0.0101,0.0089,0.0074
+
 };
 int main(int argc, char** argv)
 {
@@ -48,8 +70,8 @@ int main(int argc, char** argv)
 
 	float theta = 45.0f;  // rotation angle, degrees.
 
-	int imgRows = 512;
-	int imgCols = 512;
+	int imgRows;
+	int imgCols;
 	int imgChannels;
 
 	int runtype = 0;
@@ -103,12 +125,13 @@ int main(int argc, char** argv)
 			CLFileName = "device.cl";
 			CLKernelName = "img_conv_filter";
 			dim0 = 2;
-			global0[0] = imgCols; global0[1] = imgRows; global0[2] = 0;
-			local0[0] = 32; local0[1] = 2; local0[2] = 0;
-			theta = atof(argv[2]);
 			inFile = argv[3];
 			outFilename = argv[4];
 			imgdata = stbi_load(inPath.append(inFile).c_str(), &imgCols, &imgRows, &imgChannels, 0);
+			global0[0] = imgCols; global0[1] = imgRows; global0[2] = 0;
+			local0[0] = 32; local0[1] = 2; local0[2] = 0;
+			theta = atof(argv[2]);
+
 			hOutputImg = (unsigned char*)malloc(imgRows*imgCols * imgChannels * sizeof(unsigned char));
 			printf("img_conv_filter: Runtype = %d Kernel File: %s, Kernel Function: %s, Rotation Angle: %f (degrees), infile: %s, outputfile: %s\n", runtype, CLFileName.c_str(), CLKernelName.c_str(), theta, inFile.c_str(), outFilename.c_str());			
 			break;
@@ -118,10 +141,9 @@ int main(int argc, char** argv)
 			outFilename = argv[4];
 			std::cout << "Input file is: " << inFile << std::endl;
 
-
 			for (int rpts = 0; rpts < NUM_KERNEL_REPEATS; rpts++) {
 				QueryPerformanceCounter(&perfCountStart);
-				serial_gaussian_blur(inFile, gaussBlurFilter_5x5, outFilename);
+				serial_gaussian_blur(inFile, gaussBlurFilter_5x5, outFilename.append("_serial.jpg"));
 				QueryPerformanceCounter(&perfCountStop);
 				QueryPerformanceFrequency(&perfFreq);
 				execTime = 1000.0f * (float)(perfCountStop.QuadPart - perfCountStart.QuadPart) / (float)perfFreq.QuadPart;
@@ -236,7 +258,7 @@ int main(int argc, char** argv)
 	desc.image_type = CL_MEM_OBJECT_IMAGE2D;
 	desc.image_width = imgCols;
 	desc.image_height = imgRows;
-	desc.image_depth = 1;
+	desc.image_depth = 0;
 	desc.image_array_size = 0;
 	desc.image_slice_pitch = 0;
 	desc.image_row_pitch = 0;
@@ -331,7 +353,7 @@ int main(int argc, char** argv)
 		CL_CHK_ERR(err, "Failed to create buffer", "Buffer created successfully")
 		err = clSetKernelArg(mmul_kernels[0], 4, sizeof(cl_mem), &dBlurFilterBuffer);
 		CL_CHK_ERR(err, "Failed setting arg 4!", "Arg 4 set successfully");
-		
+		kernel_width = 5;
 		err = clSetKernelArg(mmul_kernels[0], 5, sizeof(int), &kernel_width);
 		CL_CHK_ERR(err, "Failed setting arg 5!", "Arg 5 set successfully");
 
@@ -401,7 +423,7 @@ int main(int argc, char** argv)
 
 	// NOTE: For stbi_write functions return value: 0 for ERROR, non-zero for SUCCESS
 	outPath.append(outFilename);
-	err = stbi_write_jpg(outPath.c_str(), imgCols, imgRows, imgChannels, hOutputImg, 100);
+	err = stbi_write_jpg(outPath.append("_5x5_parallel.jpg").c_str(), imgCols, imgRows, imgChannels, hOutputImg, 100);
 
 	clReleaseKernel(mmul_kernels[0]);
 	clReleaseCommandQueue(commands0);
@@ -541,4 +563,5 @@ void serial_gaussian_blur(string inFile, const float* gaussianBlurFilter, string
 	}
 	outPath.append(outFilename);
 	int err = stbi_write_jpg(outPath.c_str(), imgCols, imgRows, 1, output_img, 100);
+	stbi_image_free(imgdata);
 }
