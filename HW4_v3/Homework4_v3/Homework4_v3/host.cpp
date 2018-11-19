@@ -1,16 +1,6 @@
 
-#include <stdio.h> 
-#include <stdlib.h> 
-#include <string.h> 
-#include <string> 
-#include <fstream> 
-#include <malloc.h> 
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "c:\CODE\GL\stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "c:\CODE\GL\stb_image_write.h"
-
+#include "host.hpp"
 #include "../../common_ocl_code/read_source.h"
 #include "CLHelpers.h"
 
@@ -30,7 +20,7 @@ cl_platform_id get_intel_platform(const string platformName);
 // print the build log in case of failure 
 void build_fail_log(cl_program, cl_device_id);
 const int kernel_width = 5;
-const float gaussBlurFilter[kernel_width * kernel_width] = {
+const float gaussBlurFilter_5x5[kernel_width * kernel_width] = {
 1.0f / 273.0f, 4.0f / 273.0f, 7.0f / 273.0f, 4.0f / 273.0f, 1.0f / 273.0f,
 4.0f / 273.0f, 16.0f / 273.0f, 26.0f / 273.0f, 16.0f / 273.0f, 4.0f / 273.0f,
 7.0f / 273.0f, 26.0f / 273.0f, 41.0f / 273.0f, 26.0f / 273.0f, 7.0f / 273.0f,
@@ -70,10 +60,16 @@ int main(int argc, char** argv)
 
 	int dim0 = 2;
 	
-	//size_t global0[] = { imgCols, imgRows, 0 };  // #partitions in dim * # WIs in dim
-	//size_t local0[] = { 32,2 , 0 };
 	size_t global0[3];
 	size_t local0[3];
+
+	//For profiling
+	LARGE_INTEGER perfFreq, perfCountStart, perfCountStop;
+	float cumRuntime = 0.0;
+	float cumSeqRuntime = 0.0;
+	float execTime, mean, variance, stddev;
+	float timeSamples[100];
+
 	if (argc < 2)
 	{
 		printf("ERROR Invalid usage of program. Requires at least 2 command line parameter inputs! Exiting...\n");
@@ -84,7 +80,7 @@ int main(int argc, char** argv)
 		runtype = atoi(argv[1]);
 		switch (runtype)
 		{
-		case 1:  // 
+		case 1:  // Rotation kernel
 			if (argc != 5)
 			{
 				printf("ERROR Invalid usage of program. Requires 3 command line inputs: runtype theta infile outfile! Exiting...\n");
@@ -103,7 +99,7 @@ int main(int argc, char** argv)
 			hOutputImg = (unsigned char*)malloc(imgRows*imgCols * imgChannels * sizeof(unsigned char));
 			printf("img_rotate: Runtype = %d Kernel File: %s, Kernel Function: %s, Rotation Angle: %f (degrees), infile: %s, outputfile: %s\n", runtype, CLFileName.c_str(), CLKernelName.c_str(), theta, inFile.c_str(), outFilename.c_str());
 			break;
-		case 2: // 
+		case 2: // Convolutional kernel
 			CLFileName = "device.cl";
 			CLKernelName = "img_conv_filter";
 			dim0 = 2;
@@ -115,6 +111,36 @@ int main(int argc, char** argv)
 			imgdata = stbi_load(inPath.append(inFile).c_str(), &imgCols, &imgRows, &imgChannels, 0);
 			hOutputImg = (unsigned char*)malloc(imgRows*imgCols * imgChannels * sizeof(unsigned char));
 			printf("img_conv_filter: Runtype = %d Kernel File: %s, Kernel Function: %s, Rotation Angle: %f (degrees), infile: %s, outputfile: %s\n", runtype, CLFileName.c_str(), CLKernelName.c_str(), theta, inFile.c_str(), outFilename.c_str());			
+			break;
+		case 3: // serial implementation'
+			std::cout << "Running serial implementation" << std::endl;
+			inFile = argv[3];
+			outFilename = argv[4];
+			std::cout << "Input file is: " << inFile << std::endl;
+
+
+			for (int rpts = 0; rpts < NUM_KERNEL_REPEATS; rpts++) {
+				QueryPerformanceCounter(&perfCountStart);
+				serial_gaussian_blur(inFile, gaussBlurFilter_5x5, outFilename);
+				QueryPerformanceCounter(&perfCountStop);
+				QueryPerformanceFrequency(&perfFreq);
+				execTime = 1000.0f * (float)(perfCountStop.QuadPart - perfCountStart.QuadPart) / (float)perfFreq.QuadPart;
+				timeSamples[rpts] = execTime;
+			}
+			mean = 0.0f;
+			for (int i = 0; i < NUM_KERNEL_REPEATS; i++) {
+				mean += timeSamples[i];
+			}
+			mean /= NUM_KERNEL_REPEATS;
+			variance = 0.0f;
+			for (int i = 0; i < NUM_KERNEL_REPEATS; i++) {
+				variance += (timeSamples[i] - mean) * (timeSamples[i] - mean);
+			}
+			variance /= NUM_KERNEL_REPEATS;
+			stddev = std::sqrt(variance);
+			std::cout << "Mean = " << mean << " milliseconds" << std::endl;
+			std::cout << "Std = " << stddev << std::endl;
+			std::cout << "==========ALL DONE, EVERYTHING ELSE IS GARBAGE==============" << std::endl;
 			break;
 		default:
 			printf("ERROR Invalid runtype value (%d) provided on commandline. Exiting...\n", runtype);
@@ -301,13 +327,12 @@ int main(int argc, char** argv)
 	}
 	else if (2 == runtype) //Blur kernel arg (gaussian kernel)
 	{
-		cl_mem dBlurFilterBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(gaussBlurFilter), (void *)gaussBlurFilter, &err);
+		cl_mem dBlurFilterBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(gaussBlurFilter_5x5), (void *)gaussBlurFilter_5x5, &err);
+		CL_CHK_ERR(err, "Failed to create buffer", "Buffer created successfully")
 		err = clSetKernelArg(mmul_kernels[0], 4, sizeof(cl_mem), &dBlurFilterBuffer);
-		printf("Setting argument number 4 (blur kernel)\n");
 		CL_CHK_ERR(err, "Failed setting arg 4!", "Arg 4 set successfully");
 		
 		err = clSetKernelArg(mmul_kernels[0], 5, sizeof(int), &kernel_width);
-		printf("Setting argument number 5\n");
 		CL_CHK_ERR(err, "Failed setting arg 5!", "Arg 5 set successfully");
 
 
@@ -318,13 +343,11 @@ int main(int argc, char** argv)
 		CL_CHK_ERR(err, "Failed to set arg 6", "Arg 6 set sucessfully")
 	}
 
-	// Execute the kernel over the entire NDRange  
-	//printf("Executing NDRange \n");
-
-#define NUM_KERNEL_REPEATS 1
 	// NO PROFILING
+	std::cout << "====Profiling parallel implementation====" << std::endl;
 	for (int rpts = 0; rpts < NUM_KERNEL_REPEATS; rpts++)
-	{
+	{ 
+		QueryPerformanceCounter(&perfCountStart);
 		err = clEnqueueNDRangeKernel(commands0, mmul_kernels[0], dim0, NULL, global0, local0, 0, NULL, NULL);
 		if (CL_SUCCESS != err)
 		{
@@ -346,7 +369,24 @@ int main(int argc, char** argv)
 			clReleaseContext(context);
 			return EXIT_FAILURE;
 		}
+		QueryPerformanceCounter(&perfCountStop);
+		QueryPerformanceFrequency(&perfFreq);
+		execTime = 1000.0f * (float)(perfCountStop.QuadPart - perfCountStart.QuadPart) / (float)perfFreq.QuadPart;
+		timeSamples[rpts] = execTime;
 	}
+	mean = 0.0f;
+	for (int i = 0; i < NUM_KERNEL_REPEATS; i++) {
+		mean += timeSamples[i];
+	}
+	mean /= NUM_KERNEL_REPEATS;
+	variance = 0.0f;
+	for (int i = 0; i < NUM_KERNEL_REPEATS; i++) {
+		variance += (timeSamples[i] - mean) * (timeSamples[i] - mean);
+	}
+	variance /= NUM_KERNEL_REPEATS;
+	stddev = std::sqrt(variance);
+	std::cout << "Mean = " << mean << " milliseconds" << std::endl;
+	std::cout << "Std = " << stddev << std::endl;
 
 	//printf("\n");
 	printf("\n***** NDRange is finished ***** \n");
@@ -462,3 +502,43 @@ void build_fail_log(cl_program program, cl_device_id device_id)
 	}
 }
 
+
+void serial_gaussian_blur(string inFile, const float* gaussianBlurFilter, string outFilename) {
+	int imgRows;
+	int imgCols;
+	int imgChannels;
+	int filtWidth = 5;
+	int halfWidth = (int)(filtWidth / 2);
+	unsigned char *imgdata = NULL;
+	string inPath = "C:/Users/Cole Rogers/Pictures/EE524/";
+	string outPath = "C:/Users/Cole Rogers/Pictures/EE524/";
+
+	imgdata = stbi_load(inPath.append(inFile).c_str(), &imgCols, &imgRows, &imgChannels, 0);
+	unsigned char* output_img;
+	output_img = (unsigned char*)malloc(sizeof(unsigned char) * imgRows * imgCols);
+	for (int i = 0; i < imgRows; i++) {
+		for (int j = 0; j < imgCols*4; j+=4) {
+			float sum = 0;
+
+			for (int k = -halfWidth; k <= halfWidth; k++) {
+				for (int l = -halfWidth; l <= halfWidth; l++) {
+					int r = j + k;
+					int c = j + l;
+
+					r = (r < 0) ? 0 : r;
+					c = (c < 0) ? 0 : c;
+
+					r = (r >= imgRows) ? imgRows - 1 : r;
+					c = (c >= imgCols) ? imgCols - 1 : c;
+
+					int fRow = k + halfWidth;
+					int fCol = l + halfWidth;
+					sum += imgdata[r * imgCols + c] * gaussianBlurFilter[filtWidth * fRow + fCol];	
+				}
+			}
+			output_img[imgCols * i + (int)(j/4)] = int(sum);
+		}
+	}
+	outPath.append(outFilename);
+	int err = stbi_write_jpg(outPath.c_str(), imgCols, imgRows, 1, output_img, 100);
+}

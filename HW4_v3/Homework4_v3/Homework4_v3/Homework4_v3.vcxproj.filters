@@ -31,5 +31,8 @@
     <ClInclude Include="CLHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="host.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
