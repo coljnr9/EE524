@@ -29,7 +29,14 @@ cl_platform_id get_intel_platform(const string platformName);
 
 // print the build log in case of failure 
 void build_fail_log(cl_program, cl_device_id);
-
+const int kernel_width = 5;
+const float gaussBlurFilter[kernel_width * kernel_width] = {
+1.0f / 273.0f, 4.0f / 273.0f, 7.0f / 273.0f, 4.0f / 273.0f, 1.0f / 273.0f,
+4.0f / 273.0f, 16.0f / 273.0f, 26.0f / 273.0f, 16.0f / 273.0f, 4.0f / 273.0f,
+7.0f / 273.0f, 26.0f / 273.0f, 41.0f / 273.0f, 26.0f / 273.0f, 7.0f / 273.0f,
+4.0f / 273.0f, 16.0f / 273.0f, 26.0f / 273.0f, 16.0f / 273.0f, 4.0f / 273.0f,
+1.0f / 273.0f, 4.0f / 273.0f, 7.0f / 273.0f, 4.0f / 273.0f, 1.0f / 273.0f
+};
 int main(int argc, char** argv)
 {
 	cl_int err;                             // error code returned from api calls 
@@ -99,9 +106,9 @@ int main(int argc, char** argv)
 		case 2: // 
 			CLFileName = "device.cl";
 			CLKernelName = "img_conv_filter";
-			dim0 = 1;
-			global0[0] = 1; global0[1] = 0;
-			local0[0] = 1; local0[1] = 0;
+			dim0 = 2;
+			global0[0] = imgCols; global0[1] = imgRows; global0[2] = 0;
+			local0[0] = 32; local0[1] = 2; local0[2] = 0;
 			theta = atof(argv[2]);
 			inFile = argv[3];
 			outFilename = argv[4];
@@ -233,6 +240,7 @@ int main(int argc, char** argv)
 		clReleaseContext(context);
 		return EXIT_FAILURE;
 	}
+	
 
 	// copy host data to device
 	size_t origin[3] = { 0,0,0 };  // offset within image to copy from
@@ -290,6 +298,17 @@ int main(int argc, char** argv)
 			printf("Error: Failed to set argument 4!\n");
 			return EXIT_FAILURE;
 		}
+	}
+	else if (2 == runtype) //Blur kernel arg (gaussian kernel)
+	{
+		cl_mem dBlurFilterBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(gaussBlurFilter), (void *)gaussBlurFilter, &err);
+		err = clSetKernelArg(mmul_kernels[0], 4, sizeof(cl_mem), &dBlurFilterBuffer);
+		printf("Setting argument number 4 (blur kernel)\n");
+		CL_CHK_ERR(err, "Failed setting arg 4!", "Arg 4 set successfully");
+		
+		err = clSetKernelArg(mmul_kernels[0], 5, sizeof(int), &kernel_width);
+		printf("Setting argument number 5\n");
+		CL_CHK_ERR(err, "Failed setting arg 5!", "Arg 5 set successfully");
 	}
 
 	// Execute the kernel over the entire NDRange  

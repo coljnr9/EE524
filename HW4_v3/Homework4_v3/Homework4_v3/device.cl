@@ -25,7 +25,7 @@ __kernel void img_rotate(__read_only image2d_t inputImg, __write_only image2d_t 
 	// write to all R-G-B components, will convert from 32-bit uint to 8-bit uints?
 	write_imagef(outputImg, (int2)(x, y), (float4)(value, value, value, 0));
 }
-__kernel void img_conv_filter(__read_only image2d_t inImg, __write_only image2d_t outImg, __constant float* convfilter, uint filtWidth)
+__kernel void img_conv_filter(__read_only image2d_t inImg, __write_only image2d_t outImg, int imgWidth, int imgHeight, __constant float* convfilter, uint filtWidth)
 {
 	// use global IDs for output coords
 	int x = get_global_id(0); // columns
