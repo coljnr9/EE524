@@ -309,6 +309,13 @@ int main(int argc, char** argv)
 		err = clSetKernelArg(mmul_kernels[0], 5, sizeof(int), &kernel_width);
 		printf("Setting argument number 5\n");
 		CL_CHK_ERR(err, "Failed setting arg 5!", "Arg 5 set successfully");
+
+
+		cl_sampler mysampler = clCreateSampler(context, CL_SAMPLER_NORMALIZED_COORDS, CL_ADDRESS_CLAMP, CL_FILTER_NEAREST, &err);
+		CL_CHK_ERR(err, "Failed to create sampler", "Sampler created successfully");
+
+		err = clSetKernelArg(mmul_kernels[0], 6, sizeof(cl_sampler), &mysampler);
+		CL_CHK_ERR(err, "Failed to set arg 6", "Arg 6 set sucessfully")
 	}
 
 	// Execute the kernel over the entire NDRange  
