@@ -22,8 +22,12 @@ int main(int argc, char** argv) {
 	cl_kernel kernel;
 	cl_program program;
 
-	const size_t global_work_dim[3] = { 100, 0, 0 };
+	const size_t global_work_dim[3] = { N, 0, 0 };
 	const size_t local_work_dim[3] = { 1, 0, 0 };
+	
+	int *hOutputHashes;
+
+
 	NOTIFY("EE524 Final Project, k-Nearest Neighbors");
 
 	std::cout << std::endl; NOTIFY("Getting number of platforms");
@@ -121,6 +125,10 @@ int main(int argc, char** argv) {
 	cl_mem dInputVectors = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(cl_float16) * N, inputVectors, &clStatus);
 	CL_CHK_ERR(clStatus, "Error creating inputVector buffer", "inputVector buffer created successfully.");
 
+	hOutputHashes = (int *)malloc(sizeof(int) * N);
+	cl_mem dOutputHashes = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(cl_int) * N, hOutputHashes, &clStatus);
+	CL_CHK_ERR(clStatus, "Error creating outputHash buffer", "outputHash buffer created successfully.");
+
 	clStatus = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dPStableDist);
 	CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully.");
 
@@ -128,16 +136,23 @@ int main(int argc, char** argv) {
 	CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully.");
 
 	clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &dInputVectors);
-	CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully.");
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully.");
 
+	clStatus = clSetKernelArg(kernel, 3, sizeof(cl_mem), &dOutputHashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully.");
 
 	clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, global_work_dim, NULL, 0, NULL, NULL);
 	CL_CHK_ERR(clStatus, "Error enqueuing kernel", "Kernel enqueued successfully.");
 
 	clFinish(commands);
+	NOTIFY("COMMAND QUEUE FINSIHED");
 
+	hOutputHashes = (int *)clEnqueueMapBuffer(commands, dOutputHashes, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * N, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Error mapping output buffer", "Output buffer mapped successfully.");
 
-
+	for (int i = 0; i < N; i++) {
+		std::cout << hOutputHashes[i] << ", ";
+	}
 	free(platforms);
 	free(platform_info);
 	

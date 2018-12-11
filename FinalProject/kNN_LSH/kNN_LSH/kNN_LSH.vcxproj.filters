@@ -32,6 +32,15 @@
     <ClInclude Include="read_source.h">
       <Filter>OpenCL Files</Filter>
     </ClInclude>
+    <ClInclude Include="inputVectors.hpp">
+      <Filter>OpenCL Files</Filter>
+    </ClInclude>
+    <ClInclude Include="random_a_vectors.h">
+      <Filter>OpenCL Files</Filter>
+    </ClInclude>
+    <ClInclude Include="b_scalars.h">
+      <Filter>OpenCL Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Intel_OpenCL_Build_Rules Include="kNN_kernels.cl">

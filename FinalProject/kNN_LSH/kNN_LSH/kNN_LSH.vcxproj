@@ -189,8 +189,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CLHelpers.h" />
+    <ClInclude Include="b_scalars.h" />
     <ClInclude Include="host.h" />
+    <ClInclude Include="random_a_vectors.h" />
     <ClInclude Include="read_source.h" />
+    <ClInclude Include="inputVectors.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
