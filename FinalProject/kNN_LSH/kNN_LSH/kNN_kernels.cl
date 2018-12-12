@@ -1,4 +1,4 @@
-// Add you device OpenCL code
+
 __kernel void localitySensitiveHash(__global float16 *p_stable_dist, __global uint *uniform_dist, __global float16 *inputVectors, __global int *outputHashes){ 
 	int gid;
 	int b;
@@ -24,9 +24,37 @@ __kernel void localitySensitiveHash(__global float16 *p_stable_dist, __global ui
 	dot2 = dot(a.hi.lo, q.hi.lo);
 	dot3 = dot(a.hi.hi, q.hi.hi);
 	hash = floor((dot0 + dot1 + dot2 + dot3 + b) / 4.0f);
-
+	//printf("VECTOR: %.2v16f,  HASH: %d\n", q, hash);
 	outputHashes[gid] = hash;
-
-
-	
 }
+
+__kernel void countHashes(__global int *uniqueHashes, __global *inputHashes, int N, __global int *numVectors) {
+	int *vectorIndices;
+	int hash, hashIndex, numMatchingHashes;
+	hashIndex = get_global_id(0);
+
+	hash = uniqueHashes[hashIndex];
+
+	// Count all vectors with this hash
+	numMatchingHashes = 0;
+	for (int i = 0; i < N; i++) {
+		if (inputHashes[i] == hash) {
+			numMatchingHashes++;
+		}
+	}
+	numVectors[hashIndex] = numMatchingHashes;
+}
+/*
+	int vectorIndices[numMatchingHashes];
+	int k = 0;
+	for (int i = 0; i < N; i++){ 
+		if (inputHashes[i] == hash) {
+			vectorIndices[k] = i;
+			printf("For hash %d, I found the index %d\n", hash, i);
+		}
+	}
+
+
+
+}
+*/

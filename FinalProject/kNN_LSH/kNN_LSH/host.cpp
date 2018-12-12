@@ -150,9 +150,102 @@ int main(int argc, char** argv) {
 	hOutputHashes = (int *)clEnqueueMapBuffer(commands, dOutputHashes, CL_FALSE, CL_MAP_READ, 0, sizeof(int) * N, 0, NULL, NULL, &clStatus);
 	CL_CHK_ERR(clStatus, "Error mapping output buffer", "Output buffer mapped successfully.");
 
-	for (int i = 0; i < N; i++) {
-		std::cout << hOutputHashes[i] << ", ";
+	// Count unique hashes
+	int w[N];
+	int j, i, num_unique_hashes = 0;
+
+
+
+	cl_kernel hashMappingKernel;
+	for (i = 0; i < N; i++) {
+		for (j = 0; j < num_unique_hashes; j++) {
+			if (hOutputHashes[i] == w[j])
+				break;
+		}
+
+		if (j == num_unique_hashes) {
+			w[num_unique_hashes] = hOutputHashes[i];
+			num_unique_hashes++;
+		}
 	}
+	std::cout << "Found " << num_unique_hashes << " unique hashes." << std::endl;
+	
+	// count number of vectors with each hash
+	int *uniqueHashes = (int *)malloc(sizeof(int) * (num_unique_hashes + 1));
+	int *hNumVectors = (int *)malloc(sizeof(int) * num_unique_hashes);
+
+	for (int i = 0; i < num_unique_hashes; i++) {
+		uniqueHashes[i] = w[i];
+	}
+	// each kernel gets a hash, and returns a pointer to an array of vectors indicies and a size
+	hashMappingKernel = clCreateKernel(program, "countHashes", &clStatus);
+	CL_CHK_ERR(clStatus, "Error building hashmap kernel", "HashMap kernel built successfully.");
+
+	cl_mem dUniqueHashes = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, sizeof(cl_int) * num_unique_hashes, uniqueHashes, &clStatus);
+	CL_CHK_ERR(clStatus, "Error createing unique hash buffer.", "UniqueHashes buffer created successfuly.");
+
+	cl_mem dNumVectors = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(cl_int) * num_unique_hashes, hNumVectors, &clStatus);
+	CL_CHK_ERR(clStatus, "Error createing hash counts buffer.", "HashCounts buffer created successfuly.");
+
+	clStatus = clSetKernelArg(hashMappingKernel, 0, sizeof(cl_mem), &dUniqueHashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully.");
+
+	clStatus = clSetKernelArg(hashMappingKernel, 1, sizeof(cl_mem), &dOutputHashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully.");
+
+	int hN = N;
+	clStatus = clSetKernelArg(hashMappingKernel, 2, sizeof(cl_int), &hN);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully.");
+
+	clStatus = clSetKernelArg(hashMappingKernel, 3, sizeof(cl_mem), &dNumVectors);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully.");
+
+	const size_t gwd[3] = { num_unique_hashes, 0 , 0 };
+	clStatus = clEnqueueNDRangeKernel(commands, hashMappingKernel, 1, NULL, gwd, NULL, 0, NULL, NULL);
+	CL_CHK_ERR(clStatus, "Error enqueuing kernel", "Kernel enqueued successfully.");
+	
+	clFinish(commands);
+	hNumVectors = (int *)clEnqueueMapBuffer(commands, dNumVectors, CL_TRUE, CL_MAP_READ, 0, sizeof(cl_int) * num_unique_hashes, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Error mapping output buffer", "Output buffer mapped successfully.");
+
+
+	// Number of vectors with each hash...
+	for (int i = 0; i < num_unique_hashes; i++) {
+		std::cout << "Hash: " << uniqueHashes[i] << " Num Vectors: " << hNumVectors[i] << std::endl;
+	}
+
+	// what if we want to query now?
+	NOTIFY("Querying first point")
+	cl_float16 q[1] = { 0.06221f, 0.19231f, -2.32688f, 1.54012f, -0.77666f, 1.95143f, -0.12816f, 0.14383f, -1.15380f, 0.81777f, 0.72801f, 0.18820f, -0.90387f, 0.19793f, 0.53129f, 1.45334f };
+	int *qHash;
+	qHash = (int *)malloc(sizeof(int));
+
+	// hash it to find what bucket it needs to be in
+	cl_mem queryPointBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(cl_float16), &q, &clStatus);
+	CL_CHK_ERR(clStatus, "Error setting the query point buffer", "Query point buffer set successfully");
+
+	cl_mem queryHashBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, sizeof(cl_int), &qHash, &clStatus);
+	CL_CHK_ERR(clStatus, "Error setting qHash buffer", "qHash set sucesffully buffer");
+
+	clStatus = clSetKernelArg(kernel, 2, sizeof(cl_mem), &queryPointBuffer);
+	CL_CHK_ERR(clStatus, "Error setting the query point arg", "Query point argument set successfully");
+	
+	clStatus = clSetKernelArg(kernel, 3, sizeof(cl_mem), &queryHashBuffer);
+	CL_CHK_ERR(clStatus, "Error setting qHash", "qHash set sucesffully");
+
+	const size_t gwb_100[3] = { 1, 0, 0 };
+	clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, gwb_100, NULL, 0, NULL, NULL);
+	clFinish(commands);
+
+	qHash = (int *)clEnqueueMapBuffer(commands, queryHashBuffer, CL_TRUE, CL_MAP_READ, 0, sizeof(cl_int), 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Error mapping buffer", "qHash buffer mapped successfully");
+
+	std::cout << "HASH: " << qHash[0] << std::endl;
+
+
+	
+	free(hNumVectors);
+	free(uniqueHashes);
 	free(platforms);
 	free(platform_info);
 	

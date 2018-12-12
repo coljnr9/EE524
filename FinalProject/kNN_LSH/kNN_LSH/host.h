@@ -12,4 +12,5 @@
 #include "inputVectors.hpp"
 #include "random_a_vectors.h"
 
+
 #define NOTIFY(msg) std::cout << std::string(10, '*') << msg << std::string(10, '*') << std::endl;
