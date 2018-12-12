@@ -44,17 +44,7 @@ __kernel void countHashes(__global int *uniqueHashes, __global *inputHashes, int
 	}
 	numVectors[hashIndex] = numMatchingHashes;
 }
-/*
-	int vectorIndices[numMatchingHashes];
-	int k = 0;
-	for (int i = 0; i < N; i++){ 
-		if (inputHashes[i] == hash) {
-			vectorIndices[k] = i;
-			printf("For hash %d, I found the index %d\n", hash, i);
-		}
-	}
 
+__kernel void sortVectorsByHash(__global float16 *inputVectors, __global int *uniqueHashes, __global int *numVectorsByHash, __global float16 *vectorListLocation){ }
+	
 
-
-}
-*/

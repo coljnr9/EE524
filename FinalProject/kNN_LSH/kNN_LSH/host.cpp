@@ -209,16 +209,37 @@ int main(int argc, char** argv) {
 	CL_CHK_ERR(clStatus, "Error mapping output buffer", "Output buffer mapped successfully.");
 
 
-	// Number of vectors with each hash...
+	NOTIFY("sortingVectorsByHash");
+	//Make array of pointers
+	cl_float16 **ptrArray;
+	ptrArray = (cl_float16 **)malloc(sizeof(cl_float16 **));
+	*ptrArray = (cl_float16 *)malloc(sizeof(cl_float16 *) * num_unique_hashes);
+	
+
+	std::cout << "XX" << sizeof(ptrArray) << std::endl;
+
+	//malloc space for each list of vectors
+
 	for (int i = 0; i < num_unique_hashes; i++) {
-		std::cout << "Hash: " << uniqueHashes[i] << " Num Vectors: " << hNumVectors[i] << std::endl;
+		ptrArray[i] = (cl_float16*)malloc(sizeof(cl_float16) * hNumVectors[i]);		
+
+		std::cout << "Num Vectors: " << hNumVectors[i] << " size of malloc: " << sizeof(*ptrArray[i]) << std::endl;
 	}
 
+
 	// what if we want to query now?
+
+
+
+
+
+
+
+
+
 	NOTIFY("Querying first point")
 	cl_float16 q[1] = { 0.06221f, 0.19231f, -2.32688f, 1.54012f, -0.77666f, 1.95143f, -0.12816f, 0.14383f, -1.15380f, 0.81777f, 0.72801f, 0.18820f, -0.90387f, 0.19793f, 0.53129f, 1.45334f };
-	int *qHash;
-	qHash = (int *)malloc(sizeof(int));
+	int qHash[1];
 
 	// hash it to find what bucket it needs to be in
 	cl_mem queryPointBuffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizeof(cl_float16), &q, &clStatus);
@@ -237,13 +258,28 @@ int main(int argc, char** argv) {
 	clStatus = clEnqueueNDRangeKernel(commands, kernel, 1, NULL, gwb_100, NULL, 0, NULL, NULL);
 	clFinish(commands);
 
-	qHash = (int *)clEnqueueMapBuffer(commands, queryHashBuffer, CL_TRUE, CL_MAP_READ, 0, sizeof(cl_int), 0, NULL, NULL, &clStatus);
+	int *hQHash = (int *)malloc(sizeof(int));
+	hQHash = (int *)clEnqueueMapBuffer(commands, queryHashBuffer, CL_TRUE, CL_MAP_READ, 0, sizeof(int), 0, NULL, NULL, &clStatus);
 	CL_CHK_ERR(clStatus, "Error mapping buffer", "qHash buffer mapped successfully");
 
-	std::cout << "HASH: " << qHash[0] << std::endl;
 
-
+	std::cout << "HASH: " << hQHash[0] << std::endl;
 	
+
+	// search
+	int hashBucketIdx = -1;
+	for (int i = 0; i < num_unique_hashes; i++) {
+		if (hQHash[0] == uniqueHashes[i]) {
+			hashBucketIdx = i;
+			break;
+		}
+	}
+	
+	int numPossibleNeighbors = hNumVectors[hashBucketIdx];
+
+	cl_float16 *dNeighbors = (cl_float16 *)malloc(sizeof(cl_float16) * numPossibleNeighbors);
+
+
 	free(hNumVectors);
 	free(uniqueHashes);
 	free(platforms);
