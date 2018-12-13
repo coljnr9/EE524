@@ -256,7 +256,7 @@ int main(int argc, char** argv) {
 							std::cout << std::endl << "**************************Execute Kernel*******************************************" << std::endl;
 							for (int i = 0; i < 500; i++){
 								QueryPerformanceCounter(&perfCountNDRangeStart);
-								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 3, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
 								QueryPerformanceCounter(&perfCountNDRangeStop);
 								QueryPerformanceFrequency(&perfFreq);
 								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
 								clFinish(commands);
 								
 								float exectime = 1000.0f * (float)(perfCountNDRangeStop.QuadPart - perfCountNDRangeStart.QuadPart) / (float)perfFreq.QuadPart;
-								//std::cout << "This runtime: " << exectime << std::endl;
+							
 								cumRuntime += exectime;
 								cl_map_flags MapFlags(CL_MAP_READ);
 								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
@@ -277,14 +277,14 @@ int main(int argc, char** argv) {
 
 							for (int i = 0; i < 500; i++) {
 								QueryPerformanceCounter(&perfCountNDRangeStart);
-								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
+								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 3, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, NULL);
 								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
 
 								clFinish(commands);
 								QueryPerformanceCounter(&perfCountNDRangeStop);
 								QueryPerformanceFrequency(&perfFreq);
 								float exectime = 1000.0f * (float)(perfCountNDRangeStop.QuadPart - perfCountNDRangeStart.QuadPart) / (float)perfFreq.QuadPart;
-								//std::cout << "This runtime: " << exectime << std::endl;
+							
 								cumRuntime += exectime;
 								cl_map_flags MapFlags(CL_MAP_READ);
 								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
@@ -302,7 +302,7 @@ int main(int argc, char** argv) {
 							size_t return_bytes;
 							for (int i = 0; i < 500; i++) {								
 								clStatus = clEnqueueNDRangeKernel(commands, matmul_kernel, 2, NULL, matmul_global_work_dim, matmul_local_work_dim, 0, NULL, &prof_event);
-								//CL_CHK_ERR(clStatus, "Error enqueueing kernel", "Kernel dispatched successfully");
+								//CL_CHK_ERR(clStatus, "Error enqueueing kernel (OCL)", "Kernel dispatched successfully (OCL)");
 								
 								clStatus = clWaitForEvents(1, &prof_event);
 								//CL_CHK_ERR(clStatus, "Error waiting for events", "Waited for events successfully");
@@ -332,7 +332,10 @@ int main(int argc, char** argv) {
 								cl_map_flags MapFlags(CL_MAP_READ);
 								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
 								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
-
+								if (i % 50 == 0) {
+									printf("This iter: %d\n", i);
+								}
+								
 								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
 							}
 							std::cout << "Average runtime for clEnqueueNDRange (over 500 iters): " << 1000.0f * run_time / 500.0f << " ms (OpenCL)" << std::endl;
@@ -366,10 +369,14 @@ int main(int argc, char** argv) {
 								cl_map_flags MapFlags(CL_MAP_READ);
 								h_C = (float *)clEnqueueMapBuffer(commands, d_C, CL_FALSE, MapFlags, 0, sizeof(float) * N * N, 0, NULL, NULL, &clStatus);
 								//CL_CHK_ERR(clStatus, "Memory mapping failed", "Memory mapped successfully");
+								if (i % 50 == 0) {
+									printf("This iter: %d\n", i);
+								}
 
 								clEnqueueUnmapMemObject(commands, d_C, h_C, 0, NULL, NULL);
 							}
 							std::cout << "Average runtime total (over 500 iters): " << 1000.0f * run_time / 500.0f << " ms (OpenCL)" << std::endl;
+							// Add Std:
 							std::cout << std::endl << "*********************************Done with work for Intel platform*******************" << std::endl;
 						}
 					}

@@ -1,6 +1,5 @@
 
 __kernel void MatMul_opt1(const int N, __global float *A, __global float *B, __global float *C){
-
 	int k;
 	int i = get_global_id(0);
 	int j = get_global_id(1);
@@ -9,4 +8,5 @@ __kernel void MatMul_opt1(const int N, __global float *A, __global float *B, __g
 		tmp += A[i*N + k] * B[k*N + j];
 	}
 	C[i*N + j] = tmp;
+
 }

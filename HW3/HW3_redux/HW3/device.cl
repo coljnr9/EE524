@@ -7,7 +7,7 @@ union openCLTestUnion
 };
 
 
-typedef struct openCLTestStruct
+struct openCLTestStruct
 {
 	uint2 u2[4];
 	char4 c4 ;	
