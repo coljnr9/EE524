@@ -14,3 +14,4 @@
 
 
 #define NOTIFY(msg) std::cout << std::string(10, '*') << msg << std::string(10, '*') << std::endl;
+void printFloat16(cl_float16 vec);

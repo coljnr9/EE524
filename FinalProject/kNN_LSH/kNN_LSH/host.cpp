@@ -287,15 +287,99 @@ int main(int argc, char** argv) {
 	CL_CHK_ERR(clStatus, "Error mapping buffer", "qHash buffer mapped successfully");
 
 
-	std::cout << "HASH: " << hQHash[0] << std::endl;
-	
-
 	// We can find hash bucket start idx and length:
+	int startIdx;
+	int numNeighbors;
+	for (int i = 0; i < num_unique_hashes; i++) {
+		if (hQHash[0] == uniqueHashes[i]) {
+			startIdx = hStartIndices[i];
+			numNeighbors = hNumVectors[i];
+			break;
+		}
+	}
+
+	// Now do a distance calculation for each point in the bucket.
+	cl_float16 * hNeighbors;
+	float * hDistances;
+
+	cl_kernel computeDistancesKernel = clCreateKernel(program, "computeDistances", &clStatus);
+	CL_CHK_ERR(clStatus, "Error building computeDistances kernel", "computeDistances kernel built successfully.");
+
+	hDistances = (float *)malloc(sizeof(float) * numNeighbors);
+	cl_mem dDistances = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(float) * numNeighbors, hDistances, &clStatus);
+	CL_CHK_ERR(clStatus, "Error createing dDistances buffer", "dDistances buffer created successfully");
+	
+	cl_float16 qPoint = q[0];
+	
+	clStatus = clSetKernelArg(computeDistancesKernel, 0, sizeof(cl_float16), &qPoint);
+	CL_CHK_ERR(clStatus, "Error setting the query point arg", "Query point argument set successfully");
+
+	clStatus = clSetKernelArg(computeDistancesKernel, 1, sizeof(cl_mem), &dSortedVectors);
+	CL_CHK_ERR(clStatus, "Error setting dDistances arg", "dDistances arg set successfully");
+
+	clStatus = clSetKernelArg(computeDistancesKernel, 2, sizeof(cl_int), &startIdx);
+	CL_CHK_ERR(clStatus, "Error setting dDistances arg", "dDistances arg set successfully");
+	
+	clStatus = clSetKernelArg(computeDistancesKernel, 3, sizeof(cl_mem), &dDistances);
+	CL_CHK_ERR(clStatus, "Error setting dDistances arg", "dDistances arg set successfully");
 
 
+	const size_t this_gwb[3] = { numNeighbors, 0, 0 };
+	clStatus = clEnqueueNDRangeKernel(commands, computeDistancesKernel, 1, NULL, this_gwb, NULL, 0, NULL, NULL);
+	CL_CHK_ERR(clStatus, "Error running distance kernel", "distance kernel ran successfully");
+
+	/*
+	* This can remain controlled by device unless I need to actually look at the unsorted distances (debugging).
+
+	hDistances = (float *)clEnqueueMapBuffer(commands, dDistances, CL_TRUE, CL_MAP_READ, 0, sizeof(float) * numNeighbors, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Error mapping distance buffer", "distance buffer mapped succesfully");
+	*/
+
+
+	cl_kernel sortKernel = clCreateKernel(program, "parallelSort", &clStatus);
+	CL_CHK_ERR(clStatus, "Error building sortKernel kernel", "sortKernel kernel built successfully.");
+
+	int* hSortedIndices;
+	hSortedIndices = (int *)malloc(sizeof(int) * numNeighbors);
+
+	cl_mem dSortedIndices = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(float) * numNeighbors, hSortedIndices, &clStatus);
+	CL_CHK_ERR(clStatus, "Error createing dSortedDistances buffer", "dSortedDistances buffer created successfully");
+
+
+	clStatus = clSetKernelArg(sortKernel, 0, sizeof(cl_mem), &dDistances);
+	CL_CHK_ERR(clStatus, "Error setting the dDistances", "dDistances set successfully");
+
+	clStatus = clSetKernelArg(sortKernel, 1, sizeof(cl_mem), &dSortedIndices);
+	CL_CHK_ERR(clStatus, "Error setting dSortedDistances arg", "dSortedDistances arg set successfully");
+
+
+	clStatus = clSetKernelArg(sortKernel, 2, sizeof(cl_int), &numNeighbors);
+	CL_CHK_ERR(clStatus, "Error setting numNeighbors arg", "numNeighbors arg set successfully");
+
+	clStatus = clEnqueueNDRangeKernel(commands, sortKernel, 1, NULL, this_gwb, NULL, 0, NULL, NULL);
+	CL_CHK_ERR(clStatus, "Error with sort kernel", "sortKernel ran successfully.");
+
+	clFinish(commands);
+
+	hSortedIndices = (int *)clEnqueueMapBuffer(commands, dSortedIndices, CL_TRUE, CL_MAP_READ, 0, sizeof(int) * numNeighbors, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Error mapping distance buffer", "distance buffer mapped succesfully");
+	
+	NOTIFY("Nearest Neighbors found (k=4)")
+	for (int i = 0; i < 4; i++) {
+		printFloat16(hSortedVectors[hSortedIndices[i]]);
+	
+	}
+	
 	free(hNumVectors);
 	free(uniqueHashes);
 	free(platforms);
 	free(platform_info);
 	
+}
+void printFloat16(cl_float16 vec) {
+	std::cout << "< ";
+	for (int i = 0; i < 15; i++) {
+		std::cout << vec.s[i] << ", ";
+	}
+	std::cout << vec.s[15] << " >" << std::endl;
 }
