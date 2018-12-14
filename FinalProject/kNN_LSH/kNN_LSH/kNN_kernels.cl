@@ -28,7 +28,7 @@ __kernel void localitySensitiveHash(__global float16 *p_stable_dist, __global ui
 	outputHashes[gid] = hash;
 }
 
-__kernel void countHashes(__global int *uniqueHashes, __global *inputHashes, int N, __global int *numVectors) {
+__kernel void countHashes(__global int *uniqueHashes, __global int *inputHashes, int N, __global int *numVectors) {
 	int *vectorIndices;
 	int hash, hashIndex, numMatchingHashes;
 	hashIndex = get_global_id(0);
@@ -45,6 +45,33 @@ __kernel void countHashes(__global int *uniqueHashes, __global *inputHashes, int
 	numVectors[hashIndex] = numMatchingHashes;
 }
 
-__kernel void sortVectorsByHash(__global float16 *inputVectors, __global int *uniqueHashes, __global int *numVectorsByHash, __global float16 *vectorListLocation){ }
+__kernel void sortVectorsByHash(__global float16 *inputVectors, __global int *allHashes, int N, __global int *uniqueHashes, __global int *numVectors, __global float16 *sortedVectors, int num_unique_hashes, __global int *startIndicies) {
+	// Already have hashes (allHashes) and vectors (inputVectors).  Each array gets a unique hash, and puts vectors with matchings hashes into it's vectorListLocation
+	int gid = get_global_id(0);
+
+	int hash = uniqueHashes[gid];
+	int myStartIdx = 0;
+
+	for (int i = 0; i < num_unique_hashes; i++) {
+		if (uniqueHashes[i] == hash) { 
+			break;
+		}
+		else {
+			myStartIdx += numVectors[i];			
+		}
+	}
+	startIndicies[gid] = myStartIdx;
+
+	int k = 0;
+	for (int i = 0; i < N; i++){ 
+		if (allHashes[i] == hash){ 
+			sortedVectors[myStartIdx + k] = inputVectors[i];
+			k++;
+		}
+		else {/* Do nothing */ }
+	}
+
+
+}
 	
 

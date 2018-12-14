@@ -208,33 +208,57 @@ int main(int argc, char** argv) {
 	hNumVectors = (int *)clEnqueueMapBuffer(commands, dNumVectors, CL_TRUE, CL_MAP_READ, 0, sizeof(cl_int) * num_unique_hashes, 0, NULL, NULL, &clStatus);
 	CL_CHK_ERR(clStatus, "Error mapping output buffer", "Output buffer mapped successfully.");
 
+	clStatus = clEnqueueUnmapMemObject(commands, dOutputHashes, hOutputHashes, 0, NULL, NULL);
+	CL_CHK_ERR(clStatus, "Failed to unmap dOutputHashes", "dOutputHashes unmapped sucessfully.");
+
 
 	NOTIFY("sortingVectorsByHash");
-	//Make array of pointers
-	cl_float16 **ptrArray;
-	ptrArray = (cl_float16 **)malloc(sizeof(cl_float16 **));
-	*ptrArray = (cl_float16 *)malloc(sizeof(cl_float16 *) * num_unique_hashes);
 	
+	cl_kernel sortVectorsKernel = clCreateKernel(program, "sortVectorsByHash", &clStatus);
+	CL_CHK_ERR(clStatus, "Error building sortVectorsByHash kernel", "sortVectorsByHash kernel built successfully.");
 
-	std::cout << "XX" << sizeof(ptrArray) << std::endl;
+	cl_float16 *hSortedVectors = (cl_float16 *)malloc(sizeof(cl_float16) * N);
+	int *hStartIndices = (cl_int *)malloc(sizeof(cl_int) * num_unique_hashes);
 
-	//malloc space for each list of vectors
+	cl_mem dSortedVectors = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(cl_float16) * N, hSortedVectors, &clStatus);
+	CL_CHK_ERR(clStatus, "Failed to create sortedVectors buffer", "sortedVectors buffer created successfully.");
 
-	for (int i = 0; i < num_unique_hashes; i++) {
-		ptrArray[i] = (cl_float16*)malloc(sizeof(cl_float16) * hNumVectors[i]);		
+	cl_mem dStartIndices = clCreateBuffer(context, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, sizeof(cl_int) * num_unique_hashes, hStartIndices, &clStatus);
+	CL_CHK_ERR(clStatus, "Failed to create dStartIndices buffer", "dStartIndices buffer created successfully.");
 
-		std::cout << "Num Vectors: " << hNumVectors[i] << " size of malloc: " << sizeof(*ptrArray[i]) << std::endl;
-	}
+	clStatus = clSetKernelArg(sortVectorsKernel, 0, sizeof(cl_mem), &dInputVectors);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 0", "Kernel arg 0 set successfully.");
 
+	clStatus = clSetKernelArg(sortVectorsKernel, 1, sizeof(cl_mem), &dOutputHashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 1", "Kernel arg 1 set successfully.");
 
-	// what if we want to query now?
+	clStatus = clSetKernelArg(sortVectorsKernel, 2, sizeof(cl_int), &hN);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 2", "Kernel arg 2 set successfully.");
 
+	clStatus = clSetKernelArg(sortVectorsKernel, 3, sizeof(cl_mem), &dUniqueHashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 3", "Kernel arg 3 set successfully.");
 
+	clStatus = clSetKernelArg(sortVectorsKernel, 4, sizeof(cl_mem), &dNumVectors);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 4", "Kernel arg 4 set successfully.");
 
+	clStatus = clSetKernelArg(sortVectorsKernel, 5, sizeof(cl_mem), &dSortedVectors);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 5", "Kernel arg 5 set successfully.");
+	
+	clStatus = clSetKernelArg(sortVectorsKernel, 6, sizeof(cl_int), &num_unique_hashes);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 6", "Kernel arg 6 set successfully.");
 
+	clStatus = clSetKernelArg(sortVectorsKernel, 7, sizeof(cl_mem), &dStartIndices);
+	CL_CHK_ERR(clStatus, "Error setting kernel arg 7", "Kernel arg 7 set successfully.");
 
+	clStatus = clEnqueueNDRangeKernel(commands, sortVectorsKernel, 1, NULL, gwd, NULL, 0, NULL, NULL);
+	CL_CHK_ERR(clStatus, "Error with sortVectorKernel", "sortVectorKernel queued successfully");
+	clFinish(commands);
 
-
+	hStartIndices = (int *)clEnqueueMapBuffer(commands, dStartIndices, CL_FALSE, CL_MAP_READ, 0, sizeof(cl_int) * num_unique_hashes, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Failed to map startIdx buffer", "startIdx buffer mapped successfully");
+	
+	hSortedVectors = (cl_float16 *)clEnqueueMapBuffer(commands, dSortedVectors, CL_FALSE, CL_MAP_READ, 0, sizeof(cl_float16) * num_unique_hashes, 0, NULL, NULL, &clStatus);
+	CL_CHK_ERR(clStatus, "Failed to map dSortedVectors buffer", "dSortedVectors buffer mapped successfully");
 
 
 	NOTIFY("Querying first point")
@@ -266,18 +290,7 @@ int main(int argc, char** argv) {
 	std::cout << "HASH: " << hQHash[0] << std::endl;
 	
 
-	// search
-	int hashBucketIdx = -1;
-	for (int i = 0; i < num_unique_hashes; i++) {
-		if (hQHash[0] == uniqueHashes[i]) {
-			hashBucketIdx = i;
-			break;
-		}
-	}
-	
-	int numPossibleNeighbors = hNumVectors[hashBucketIdx];
-
-	cl_float16 *dNeighbors = (cl_float16 *)malloc(sizeof(cl_float16) * numPossibleNeighbors);
+	// We can find hash bucket start idx and length:
 
 
 	free(hNumVectors);
